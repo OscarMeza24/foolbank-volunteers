@@ -60,11 +60,11 @@ class AssignmentController extends Controller
     {
         try {
             $data = $request->validate([
-                'volunteer_id' => REQUIRED . '|uuid',
-                'event_id' => REQUIRED . '|uuid',
-                'role' => REQUIRED . '|string',
-                'status' => REQUIRED . '|string|in:assigned,confirmed,completed,cancelled',
-                'assigned_by' => REQUIRED . '|uuid'
+                'volunteer_id' => REQUIRED . '|' . UUID,
+                'event_id' => REQUIRED . '|' . UUID,
+                'role' => REQUIRED . '|' . STRING,
+                'status' => REQUIRED . '|' . STRING . '|' . IN . ':assigned,confirmed,completed,cancelled',
+                'assigned_by' => REQUIRED . '|' . UUID
             ]);
 
             $data['id'] = $this->supabaseService->generateUUID();
@@ -82,8 +82,8 @@ class AssignmentController extends Controller
     {
         try {
             $data = $request->validate([
-                'role' => NULLABLE . '|string',
-                'status' => NULLABLE . '|string|in:assigned,confirmed,completed,cancelled'
+                'role' => NULLABLE . '|' . STRING,
+                'status' => NULLABLE . '|' . STRING . '|' . IN . ':assigned,confirmed,completed,cancelled'
             ]);
 
             $result = $this->supabaseService->update('assignments', $id, $data);
