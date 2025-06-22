@@ -139,17 +139,17 @@ class TestSupabaseController extends Controller
         switch ($table) {
             case 'users':
                 if (!isset($data['email']) || !isset($data['password'])) {
-                    throw new \Exception('Los campos email y password son requeridos para usuarios');
+                    throw new \Exception('Los campos email y password son requeridos para usuarios ...');
                 }
                 break;
             case 'volunteers':
                 if (!isset($data['user_id']) || !isset($data['skills'])) {
-                    throw new \Exception('Los campos user_id y skills son requeridos para voluntarios');
+                    throw new \Exception('Los campos user_id y skills son requeridos para voluntarios ...');
                 }
                 break;
             case 'assignments':
                 if (!isset($data['volunteer_id']) || !isset($data['event_id'])) {
-                    throw new \Exception('Los campos volunteer_id y event_id son requeridos para asignaciones');
+                    throw new \Exception('Los campos volunteer_id y event_id son requeridos para asignaciones ...');
                 }
                 break;
             default:
