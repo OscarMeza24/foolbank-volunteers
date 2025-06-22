@@ -8,6 +8,12 @@ use App\Services\VolunteerMatchingService;
 use App\Models\Assignment;
 use App\Models\Event;
 
+const required = 'required';
+const nullable = 'nullable';
+const string = 'string';
+const uuid = 'uuid';
+const in = 'in';
+
 class AssignmentController extends Controller
 {
     protected $supabaseService;
@@ -54,11 +60,11 @@ class AssignmentController extends Controller
     {
         try {
             $data = $request->validate([
-                'volunteer_id' => 'required|uuid',
-                'event_id' => 'required|uuid',
-                'role' => 'required|string',
-                'status' => 'required|string|in:assigned,confirmed,completed,cancelled',
-                'assigned_by' => 'required|uuid'
+                'volunteer_id' => required . '|uuid',
+                'event_id' => required . '|uuid',
+                'role' => required . '|string',
+                'status' => required . '|string|in:assigned,confirmed,completed,cancelled',
+                'assigned_by' => required . '|uuid'
             ]);
 
             $data['id'] = $this->supabaseService->generateUUID();
@@ -76,8 +82,8 @@ class AssignmentController extends Controller
     {
         try {
             $data = $request->validate([
-                'role' => 'nullable|string',
-                'status' => 'nullable|string|in:assigned,confirmed,completed,cancelled'
+                'role' => nullable . '|string',
+                'status' => nullable . '|string|in:assigned,confirmed,completed,cancelled'
             ]);
 
             $result = $this->supabaseService->update('assignments', $id, $data);
