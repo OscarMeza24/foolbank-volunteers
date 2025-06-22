@@ -5,7 +5,13 @@ namespace App\Http\Controllers;
 use App\Services\SupabaseService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Auth;
+
+const REQUIRED = 'required';
+const NULLABLE = 'nullable';
+const STRING = 'string';
+const UUID = 'uuid';
+const IN = 'in';    
+const ErrorInsert = 'Error al insertar datos';
 
 class TestSupabaseController extends Controller
 {
@@ -50,11 +56,11 @@ class TestSupabaseController extends Controller
         try {
             // Validar los datos del request
             $validated = $request->validate([
-                'email' => 'required|email|unique:users',
-                'password' => 'required|min:8|confirmed',
-                'password_confirmation' => 'required|min:8',
-                'first_name' => 'required|string|max:50',
-                'last_name' => 'required|string|max:50'
+                'email' => REQUIRED . '|email|unique:users',
+                'password' => REQUIRED . '|min:8|confirmed',
+                'password_confirmation' => REQUIRED . '|min:8',
+                'first_name' => REQUIRED . '|string|max:50',
+                'last_name' => REQUIRED . '|string|max:50'
             ]);
 
             // Crear datos adicionales para el usuario
@@ -113,7 +119,7 @@ class TestSupabaseController extends Controller
             $response = $this->supabaseService->insert($validated['table'], $validated['data']);
 
             if ($response->getStatusCode() !== 201) {
-                throw new \Exception('Error al insertar datos: ' . $response->getStatusCode());
+                throw new \Exception(ErrorInsert . ': ' . $response->getStatusCode());
             }
 
             // Obtener los datos insertados
@@ -129,7 +135,7 @@ class TestSupabaseController extends Controller
             Log::error('Supabase insert error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Error al insertar datos: ' . $e->getMessage()
+                'message' => ErrorInsert . ': ' . $e->getMessage()
             ], 500);
         }
     }
@@ -175,7 +181,7 @@ class TestSupabaseController extends Controller
             $response = $this->supabaseService->insert('volunteers', $data);
             
             if ($response->getStatusCode() !== 201) {
-                throw new \Exception('Error al insertar datos: ' . $response->getStatusCode());
+                throw new \Exception(ErrorInsert . ': ' . $response->getStatusCode());
             }
             
             return response()->json([
