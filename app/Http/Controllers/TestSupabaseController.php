@@ -25,31 +25,72 @@ class TestSupabaseController extends Controller
         $this->supabaseService = $supabaseService;
     }
 
-    public function testConnection()
+    public function testConnection(Request $request)
     {
         try {
-            // Intentar una consulta básica para verificar conexión
-            $response = $this->supabaseService->query('volunteers', [
-                'select' => '*'
-            ]);
+            // Log para verificar la configuración del servicio
+            Log::info('Supabase connection test - Base URL: ' . $this->supabaseService->getBaseUrl());
+            Log::info('Supabase connection test - API Key: ' . substr($this->supabaseService->getApiKey(), 0, 5) . '...' . substr($this->supabaseService->getApiKey(), -5));
             
-            if ($response->getStatusCode() !== 200) {
-                throw SupabaseException::fromResponse($response);
+            // Intentar hacer una consulta simple a Supabase
+            try {
+                $response = $this->supabaseService->query('volunteer_profiles', [
+                    'select' => 'id',
+                    'limit' => 1
+                ]);
+
+                Log::info('Supabase connection test - Response status: ' . $response->getStatusCode());
+                Log::info('Supabase connection test - Response body: ' . $response->getBody());
+
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Conexión exitosa con Supabase'
+                ]);
+            } catch (\GuzzleHttp\Exception\ConnectException $e) {
+                // Error específico de conexión
+                Log::error('Error de conexión con Supabase: ' . $e->getMessage());
+                return response()->json([
+                    'success' => false,
+                    'message' => 'No se pudo conectar con Supabase. Verifica la URL y las credenciales.',
+                    'error' => [
+                        'type' => get_class($e),
+                        'message' => $e->getMessage()
+                    ]
+                ], 500);
+            } catch (\GuzzleHttp\Exception\RequestException $e) {
+                // Error en la petición
+                Log::error('Error en la petición a Supabase: ' . $e->getMessage());
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error en la petición a Supabase.',
+                    'error' => [
+                        'type' => get_class($e),
+                        'message' => $e->getMessage(),
+                        'response' => $e->getResponse() ? $e->getResponse()->getBody()->getContents() : null
+                    ]
+                ], 500);
+            } catch (\Exception $e) {
+                // Error general
+                Log::error('Error general en Supabase: ' . $e->getMessage());
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Error en la conexión con Supabase.',
+                    'error' => [
+                        'type' => get_class($e),
+                        'message' => $e->getMessage()
+                    ]
+                ], 500);
             }
-            
-            $data = json_decode($response->getBody(), true);
-            
-            return response()->json([
-                'success' => true,
-                'message' => 'Conexión exitosa con Supabase',
-                'data' => $data
-            ]);
         } catch (\Exception $e) {
-            Log::error('Supabase connection error: ' . $e->getMessage());
-            
+            // Error en la inicialización del servicio
+            Log::error('Error al inicializar el servicio Supabase: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Error al conectar con Supabase: ' . $e->getMessage()
+                'message' => 'Error al inicializar el servicio Supabase.',
+                'error' => [
+                    'type' => get_class($e),
+                    'message' => $e->getMessage()
+                ]
             ], 500);
         }
     }
@@ -126,11 +167,54 @@ class TestSupabaseController extends Controller
             $validated = $request->validate([
                 'table' => 'required|string',
                 'data' => 'required|array',
-                'table' => 'in:users,volunteers,assignments' // Solo permitir tablas específicas
+                'table' => 'in:volunteer_profiles' // Solo permitir la tabla volunteer_profiles para este test
             ]);
 
-            // Validar estructura de datos según la tabla
-            $this->validateDataStructure($validated['table'], $validated['data']);
+            // Validar estructura de datos
+            $requiredFields = ['user_id', 'availability'];
+            $optionalFields = ['skills', 'has_transport', 'reliability_score', 'total_hours_volunteered'];
+            
+            // Validar campos requeridos
+            foreach ($requiredFields as $field) {
+                if (!isset($validated['data'][$field])) {
+                    throw new \Exception("El campo {$field} es requerido para el perfil de voluntario");
+                }
+            }
+
+            // Validar tipos de datos
+            if (isset($validated['data']['skills'])) {
+                if (!is_array($validated['data']['skills'])) {
+                    throw new \Exception('El campo skills debe ser un array');
+                }
+            }
+            if (isset($validated['data']['has_transport'])) {
+                if (!is_bool($validated['data']['has_transport'])) {
+                    throw new \Exception('El campo has_transport debe ser booleano');
+                }
+            }
+            if (isset($validated['data']['reliability_score'])) {
+                if (!is_numeric($validated['data']['reliability_score'])) {
+                    throw new \Exception('El campo reliability_score debe ser numérico');
+                }
+            }
+            if (isset($validated['data']['total_hours_volunteered'])) {
+                if (!is_numeric($validated['data']['total_hours_volunteered'])) {
+                    throw new \Exception('El campo total_hours_volunteered debe ser numérico');
+                }
+            }
+
+            // Preparar datos para inserción
+            $insertData = [
+                'user_id' => $validated['data']['user_id'],
+                'availability' => $validated['data']['availability']
+            ];
+
+            // Agregar campos opcionales si existen
+            foreach ($optionalFields as $field) {
+                if (isset($validated['data'][$field])) {
+                    $insertData[$field] = $validated['data'][$field];
+                }
+            }
 
             // Procesar la inserción en Supabase
             $response = $this->supabaseService->insert($validated['table'], $validated['data']);
@@ -142,11 +226,6 @@ class TestSupabaseController extends Controller
             // Obtener los datos insertados
             $insertedData = json_decode($response['body'], true);
 
-            /**
-             * Devuelve una respuesta JSON con el resultado de la inserción.
-             *
-             * @return \Illuminate\Http\JsonResponse
-             */
             return response()->json([
                 'success' => true,
                 'message' => 'Datos insertados exitosamente',
@@ -200,7 +279,6 @@ class TestSupabaseController extends Controller
             $data = $request->all();
             
             // Insertar en la tabla volunteers
-            /** @var \Psr\Http\Message\ResponseInterface $response */
             $response = $this->supabaseService->insert('volunteers', $data);
             
             if ($response['status'] !== 201) {

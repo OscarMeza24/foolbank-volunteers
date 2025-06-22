@@ -4,9 +4,9 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
+use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken as Middleware;
 
-class DisableCsrfForTestRoutes extends VerifyCsrfToken
+class DisableCsrfForTestRoutes extends Middleware
 {
     /**
      * The URIs that should be excluded from CSRF verification.
@@ -14,22 +14,17 @@ class DisableCsrfForTestRoutes extends VerifyCsrfToken
      * @var array<int, string>
      */
     protected $except = [
-        'test-insert',
-        'test-data',
-        'signup',
-        'test.supabase'
+        'api/v1/test/*'
     ];
 
     /**
      * Handle an incoming request.
      *
-     * @param  \Closure(\Illuminate\Http\Request): (\Symfony\Component\HttpFoundation\Response)  $next
+     * @param  \Illuminate\Http\Request  $request
+     * @param  \Closure  $next
      */
     public function handle($request, Closure $next)
     {
-        if (in_array($request->path(), $this->except)) {
-            return $next($request);
-        }
         return parent::handle($request, $next);
     }
 }

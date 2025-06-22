@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\TestSupabaseController;
 
 // Ruta para probar conexión con Supabase
-Route::prefix('v1')->group(function () {
+Route::prefix('v1')->middleware(['web', 'disable.csrf.for.test.routes'])->group(function () {
     // Ruta para probar conexión con Supabase
     Route::get('/test/connection', [TestSupabaseController::class, 'testConnection'])
         ->name('api.test.connection');

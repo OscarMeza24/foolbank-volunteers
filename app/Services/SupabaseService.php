@@ -16,6 +16,16 @@ class SupabaseService
     protected $apiKey;
     protected $verifySSL;
 
+    public function getBaseUrl(): string
+    {
+        return $this->baseUrl;
+    }
+
+    public function getApiKey(): string
+    {
+        return $this->apiKey;
+    }
+
     public function __construct()
     {
         $this->initializeConfig();
@@ -34,6 +44,11 @@ class SupabaseService
         $this->authBaseUrl = $this->baseUrl . '/auth/v1';
         $this->apiKey = $config['key'];
         $this->verifySSL = $config['verify_ssl'] ?? true;
+
+        // Log de configuración para depuración
+        Log::info('Supabase service initialized');
+        Log::info('Supabase URL: ' . $this->baseUrl);
+        Log::info('Supabase API Key (partial): ' . substr($this->apiKey, 0, 5) . '...' . substr($this->apiKey, -5));
     }
 
     private function initializeClient(): void
@@ -142,14 +157,63 @@ class SupabaseService
     public function query($table, $params = [])
     {
         try {
-            $response = $this->client->request('GET', '/rest/v1/' . $table, [
-                'query' => $params
+            // Verificar que la tabla existe
+            if (empty($table)) {
+                throw new \Exception('El nombre de la tabla es requerido');
+            }
+
+            // Construir la URL completa
+            $url = $this->baseUrl . '/rest/v1/' . $table;
+            
+            // Agregar headers de autenticación explícitamente
+            $headers = [
+                'apikey' => $this->apiKey,
+                'Authorization' => 'Bearer ' . $this->apiKey,
+                'Content-Type' => 'application/json',
+                'Accept' => 'application/json'
+            ];
+
+            // Verificar si estamos en entorno de prueba
+            if (env('APP_ENV') === 'testing') {
+                // En entorno de prueba, usar SSL verification=false
+                $headers['verify'] = false;
+            }
+
+            // Realizar la petición
+            $response = $this->client->request('GET', $url, [
+                'headers' => $headers,
+                'query' => $params,
+                'timeout' => 30, // Aumentar timeout para pruebas
+                'connect_timeout' => 10
             ]);
             
+            // Verificar el estado de la respuesta
+            $statusCode = $response->getStatusCode();
+            Log::info('Supabase query response status: ' . $statusCode);
+            
+            // Obtener el cuerpo de la respuesta
+            $body = $response->getBody()->getContents();
+            Log::info('Supabase query response body: ' . $body);
+            
+            // Verificar si es JSON válido
+            $json = json_decode($body, true);
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                throw new \Exception('Respuesta no válida de Supabase: ' . json_last_error_msg());
+            }
+            
             return $response;
+        } catch (\GuzzleHttp\Exception\ConnectException $e) {
+            // Error de conexión específica
+            Log::error('Error de conexión con Supabase: ' . $e->getMessage());
+            throw new \Exception('No se pudo conectar con Supabase. Verifica la URL y las credenciales.');
+        } catch (\GuzzleHttp\Exception\RequestException $e) {
+            // Error en la petición
+            Log::error('Error en la petición a Supabase: ' . $e->getMessage());
+            throw new \Exception('Error en la petición a Supabase: ' . $e->getMessage());
         } catch (\Exception $e) {
-            Log::error('Supabase query error: ' . $e->getMessage());
-            throw $e;
+            // Error general
+            Log::error('Error general en Supabase: ' . $e->getMessage());
+            throw new \Exception('Error en la conexión con Supabase: ' . $e->getMessage());
         }
     }
 
@@ -174,9 +238,19 @@ class SupabaseService
         }
 
         try {
+            // Agregar headers de autenticación explícitamente
             $response = $this->client->request('POST', '/rest/v1/' . $table, [
+                'headers' => [
+                    'apikey' => $this->apiKey,
+                    'Authorization' => 'Bearer ' . $this->apiKey,
+                    'Content-Type' => 'application/json',
+                    'Prefer' => 'return=representation'
+                ],
                 'json' => $data
             ]);
+
+            Log::info('Supabase insert response status: ' . $response->getStatusCode());
+            Log::info('Supabase insert response body: ' . $response->getBody());
 
             if ($response->getStatusCode() !== 201) {
                 throw SupabaseException::fromResponse($response);
@@ -202,7 +276,7 @@ class SupabaseService
                 
                 public function getStatusCode(): int
                 {
-                    return 200;
+                    return 201;
                 }
                 
                 public function toArray(): array
@@ -213,7 +287,12 @@ class SupabaseService
 
         } catch (\Exception $e) {
             Log::error('Supabase insert error: ' . $e->getMessage());
-            throw new \Exception('Error al insertar datos');
+            Log::error('Supabase insert error type: ' . get_class($e));
+            Log::error('Supabase insert error code: ' . $e->getCode());
+            Log::error('Supabase insert error file: ' . $e->getFile());
+            Log::error('Supabase insert error line: ' . $e->getLine());
+            Log::error('Supabase insert error trace: ' . $e->getTraceAsString());
+            throw $e;
         }
     }
 

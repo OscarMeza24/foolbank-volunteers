@@ -15,7 +15,8 @@ class VerifyCsrfToken extends Middleware
         'test-insert',
         'test-supabase',
         'signup',
-        'test.signup'
+        'test.signup',
+        'api/v1/test/*'
     ];
 
     protected function tokensMatch($request)

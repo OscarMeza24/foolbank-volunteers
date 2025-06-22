@@ -13,27 +13,42 @@ class SupabaseTest extends TestCase
      */
     public function test_supabase_connection()
     {
-        // Primero iniciar sesión como administrador
-        $admin = User::factory()->create([
-            'email' => uniqid('admin1_', true) . '@example.com',
-            'password' => Hash::make('password123'),
-            'is_admin' => true
-        ]);
-        
-        $this->actingAs($admin);
+        try {
+            // Primero iniciar sesión como administrador
+            $admin = User::factory()->create([
+                'email' => uniqid('admin1_', true) . '@example.com',
+                'password' => Hash::make('password123'),
+                'is_admin' => true
+            ]);
+            
+            $this->actingAs($admin);
 
-        $response = $this->get('/api/v1/test/connection');
-        $response->assertStatus(200);
-        $response->assertJson([
-            'success' => true,
-            'message' => 'Conexión exitosa con Supabase'
-        ]);
+            // Verificar que el usuario se creó correctamente
+            $this->assertDatabaseHas('users', [
+                'email' => $admin->email
+            ]);
 
-        // Verificar que la respuesta tenga el formato correcto
-        $response->assertJsonStructure([
-            'success',
-            'message'
-        ]);
+            $response = $this->get('/api/v1/test/connection');
+            
+            // Verificar el estado de la respuesta
+            $this->assertEquals(200, $response->getStatusCode(), 'La respuesta no tiene el código de estado esperado');
+            
+            // Verificar el contenido de la respuesta
+            $content = json_decode($response->getContent(), true);
+            $this->assertIsArray($content, 'La respuesta no es un JSON válido');
+            
+            // Verificar los campos específicos
+            $this->assertTrue($content['success'], 'El campo success no es true');
+            $this->assertEquals('Conexión exitosa con Supabase', $content['message'], 'El mensaje no coincide');
+            
+            // Verificar la estructura completa
+            $this->assertArrayHasKey('success', $content);
+            $this->assertArrayHasKey('message', $content);
+            
+        } catch (\Exception $e) {
+            // Log del error para depuración
+            $this->fail('Error en el test: ' . $e->getMessage());
+        }
     }
 
     protected function setUp(): void
@@ -98,11 +113,14 @@ class SupabaseTest extends TestCase
         $user = User::factory()->create();
         
         $data = [
-            'table' => 'volunteers',
+            'table' => 'volunteer_profiles',
             'data' => [
                 'user_id' => $user->id,
-                'skills' => ['cooking', 'organizing'],
-                'availability' => 'full_time'
+                'availability' => json_encode(['full_time' => true]),
+                'skills' => [], // Array vacío por defecto
+                'has_transport' => false, // Booleano por defecto
+                'reliability_score' => 0.8, // Número por defecto
+                'total_hours_volunteered' => 0 // Entero por defecto
             ]
         ];
 
