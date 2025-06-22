@@ -8,11 +8,11 @@ use App\Services\VolunteerMatchingService;
 use App\Models\Assignment;
 use App\Models\Event;
 
-const required = 'required';
-const nullable = 'nullable';
-const string = 'string';
-const uuid = 'uuid';
-const in = 'in';
+const REQUIRED = 'required';
+const NULLABLE = 'nullable';
+const STRING = 'string';
+const UUID = 'uuid';
+const IN = 'in';
 
 class AssignmentController extends Controller
 {
@@ -60,11 +60,11 @@ class AssignmentController extends Controller
     {
         try {
             $data = $request->validate([
-                'volunteer_id' => required . '|uuid',
-                'event_id' => required . '|uuid',
-                'role' => required . '|string',
-                'status' => required . '|string|in:assigned,confirmed,completed,cancelled',
-                'assigned_by' => required . '|uuid'
+                'volunteer_id' => REQUIRED . '|uuid',
+                'event_id' => REQUIRED . '|uuid',
+                'role' => REQUIRED . '|string',
+                'status' => REQUIRED . '|string|in:assigned,confirmed,completed,cancelled',
+                'assigned_by' => REQUIRED . '|uuid'
             ]);
 
             $data['id'] = $this->supabaseService->generateUUID();
@@ -82,8 +82,8 @@ class AssignmentController extends Controller
     {
         try {
             $data = $request->validate([
-                'role' => nullable . '|string',
-                'status' => nullable . '|string|in:assigned,confirmed,completed,cancelled'
+                'role' => NULLABLE . '|string',
+                'status' => NULLABLE . '|string|in:assigned,confirmed,completed,cancelled'
             ]);
 
             $result = $this->supabaseService->update('assignments', $id, $data);
