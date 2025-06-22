@@ -22,3 +22,37 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Archivos del sistema
+*.regtrans-ms
+*.xml
+*.vdi
+*.vhd
+*.vhdx
+*.ini
+*.dat
+*.json
+
+# Directorios del sistema
+Configuración local/
+Cookies/
+Datos de programa/
+Entorno de red/
+Impresoras/
+Menú Inicio/
+Mis documentos/
+Plantillas/
+Reciente/
+SendTo/
+Searches/
+Tracing/
+Videos/
+VirtualBox VMs/
+Zotero/
+agent-ui/
+anaconda3/
+neurolog-app/
+node_modules/
+vendor/
+vmlogs/
+.windows-build-tools/
