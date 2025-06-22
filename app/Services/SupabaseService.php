@@ -5,6 +5,8 @@ namespace App\Services;
 use GuzzleHttp\Client as GuzzleClient;
 use Ramsey\Uuid\Uuid;
 use Illuminate\Support\Facades\Log;
+use App\Exceptions\SupabaseException;
+use App\Contracts\SupabaseResponse;
 
 class SupabaseService
 {
@@ -16,17 +18,26 @@ class SupabaseService
 
     public function __construct()
     {
+        $this->initializeConfig();
+        $this->initializeClient();
+    }
+
+    private function initializeConfig(): void
+    {
         $config = config('supabase');
         
         if (empty($config['url']) || empty($config['key'])) {
-            throw new \Exception('Las credenciales de Supabase no están configuradas correctamente');
+            throw SupabaseException::fromMessage('Las credenciales de Supabase no están configuradas correctamente');
         }
 
         $this->baseUrl = $config['url'];
         $this->authBaseUrl = $this->baseUrl . '/auth/v1';
         $this->apiKey = $config['key'];
-        $this->verifySSL = $config['verify_ssl'];
+        $this->verifySSL = $config['verify_ssl'] ?? true;
+    }
 
+    private function initializeClient(): void
+    {
         $this->client = new GuzzleClient([
             'base_uri' => $this->baseUrl,
             'headers' => [
@@ -43,7 +54,10 @@ class SupabaseService
         return $this->client;
     }
 
-    public function signup($email, $password, $data = [])
+    /**
+     * @return array
+     */
+    public function signup(string $email, string $password, array $data = [])
     {
         try {
             $response = $this->client->request('POST', $this->authBaseUrl . '/signup', [
@@ -165,10 +179,37 @@ class SupabaseService
             ]);
 
             if ($response->getStatusCode() !== 201) {
-                throw new \Exception('Error al insertar datos: ' . $response->getStatusCode());
+                throw SupabaseException::fromResponse($response);
             }
 
-            return $response;
+            $body = json_decode($response->getBody()->getContents(), true);
+            if (!is_array($body)) {
+                throw SupabaseException::fromMessage('Respuesta no válida de Supabase');
+            }
+            
+            return new class($body) implements SupabaseResponse {
+                private $body;
+                
+                public function __construct(array $body)
+                {
+                    $this->body = $body;
+                }
+                
+                public function getBody(): string
+                {
+                    return json_encode($this->body);
+                }
+                
+                public function getStatusCode(): int
+                {
+                    return 200;
+                }
+                
+                public function toArray(): array
+                {
+                    return $this->body;
+                }
+            };
 
         } catch (\Exception $e) {
             Log::error('Supabase insert error: ' . $e->getMessage());

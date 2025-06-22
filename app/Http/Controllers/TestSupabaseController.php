@@ -6,15 +6,18 @@ use App\Services\SupabaseService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
-const REQUIRED = 'required';
-const NULLABLE = 'nullable';
-const STRING = 'string';
-const UUID = 'uuid';
-const IN = 'in';    
-const ErrorInsert = 'Error al insertar datos';
+use App\Rules\SupabaseValidationRules;
+use App\Exceptions\SupabaseException;
+use Illuminate\Http\JsonResponse;
+use App\Contracts\SupabaseResponse;
+use Psr\Http\Message\ResponseInterface;
 
 class TestSupabaseController extends Controller
 {
+    private function getErrorInsertMessage(): string
+    {
+        return 'Error al insertar datos';
+    }
     protected $supabaseService;
 
     public function __construct(SupabaseService $supabaseService)
@@ -31,7 +34,7 @@ class TestSupabaseController extends Controller
             ]);
             
             if ($response->getStatusCode() !== 200) {
-                throw new \Exception('Error al consultar Supabase: ' . $response->getStatusCode());
+                throw SupabaseException::fromResponse($response);
             }
             
             $data = json_decode($response->getBody(), true);
@@ -51,17 +54,18 @@ class TestSupabaseController extends Controller
         }
     }
     
+    /**
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\JsonResponse
+     */
     public function signup(Request $request)
     {
         try {
             // Validar los datos del request
-            $validated = $request->validate([
-                'email' => REQUIRED . '|email|unique:users',
-                'password' => REQUIRED . '|min:8|confirmed',
-                'password_confirmation' => REQUIRED . '|min:8',
-                'first_name' => REQUIRED . '|string|max:50',
-                'last_name' => REQUIRED . '|string|max:50'
-            ]);
+            $validated = $request->validate(
+                SupabaseValidationRules::userSignUpRules(),
+                SupabaseValidationRules::errorMessages()
+            );
 
             // Crear datos adicionales para el usuario
             $userData = [
@@ -76,17 +80,30 @@ class TestSupabaseController extends Controller
                 $userData
             );
 
-            if ($response->getStatusCode() !== 200) {
-                throw new \Exception('Error al registrar usuario: ' . $response->getStatusCode());
+            if ($response['status'] !== 200) {
+                throw SupabaseException::fromResponse($response);
             }
 
             // Obtener el ID del usuario recién creado
-            $userId = $response['user']['id'] ?? null;
+            $userData = $response['user'] ?? null;
+            if (!$userData) {
+                throw SupabaseException::fromMessage('No se recibieron datos del usuario');
+            }
+            
+            $userId = $userData['id'] ?? null;
+            if (!$userId) {
+                throw SupabaseException::fromMessage('No se pudo obtener el ID del usuario');
+            }
             
             if (!$userId) {
-                throw new \Exception('No se pudo obtener el ID del usuario');
+                throw SupabaseException::fromMessage('No se pudo obtener el ID del usuario');
             }
 
+            /**
+             * Devuelve una respuesta JSON con el resultado del registro del usuario.
+             *
+             * @return \Illuminate\Http\JsonResponse
+             */
             return response()->json([
                 'success' => true,
                 'message' => 'Usuario registrado exitosamente',
@@ -97,7 +114,7 @@ class TestSupabaseController extends Controller
             Log::error('Supabase signup error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => 'Error al registrar usuario: ' . $e->getMessage()
+                'message' => $this->getErrorInsertMessage() . ': ' . $e->getMessage()
             ], 500);
         }
     }
@@ -118,13 +135,18 @@ class TestSupabaseController extends Controller
             // Procesar la inserción en Supabase
             $response = $this->supabaseService->insert($validated['table'], $validated['data']);
 
-            if ($response->getStatusCode() !== 201) {
-                throw new \Exception(ErrorInsert . ': ' . $response->getStatusCode());
+            if ($response['status'] !== 201) {
+                throw SupabaseException::fromResponse($response);
             }
 
             // Obtener los datos insertados
-            $insertedData = json_decode($response->getBody(), true);
+            $insertedData = json_decode($response['body'], true);
 
+            /**
+             * Devuelve una respuesta JSON con el resultado de la inserción.
+             *
+             * @return \Illuminate\Http\JsonResponse
+             */
             return response()->json([
                 'success' => true,
                 'message' => 'Datos insertados exitosamente',
@@ -135,7 +157,7 @@ class TestSupabaseController extends Controller
             Log::error('Supabase insert error: ' . $e->getMessage());
             return response()->json([
                 'success' => false,
-                'message' => ErrorInsert . ': ' . $e->getMessage()
+                'message' => $this->getErrorInsertMessage() . ': ' . $e->getMessage()
             ], 500);
         }
     }
@@ -178,22 +200,28 @@ class TestSupabaseController extends Controller
             $data = $request->all();
             
             // Insertar en la tabla volunteers
+            /** @var \Psr\Http\Message\ResponseInterface $response */
             $response = $this->supabaseService->insert('volunteers', $data);
             
-            if ($response->getStatusCode() !== 201) {
-                throw new \Exception(ErrorInsert . ': ' . $response->getStatusCode());
+            if ($response['status'] !== 201) {
+                throw SupabaseException::fromResponse($response);
+            }
+            
+            $body = json_decode($response['body'], true);
+            if (!is_array($body)) {
+                throw SupabaseException::fromMessage('Respuesta no válida de Supabase');
             }
             
             return response()->json([
                 'success' => true,
                 'message' => 'Datos insertados exitosamente',
-                'data' => json_decode($response->getBody(), true)
+                'data' => $body
             ]);
             
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error: ' . $e->getMessage()
+                'message' => $this->getErrorInsertMessage() . ': ' . $e->getMessage()
             ], 500);
         }
     }
