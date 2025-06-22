@@ -109,8 +109,3 @@ Para reportar bugs o solicitar características, por favor usa el sistema de iss
 - [Supabase](https://supabase.com) - Base de datos
 - [Tailwind CSS](https://tailwindcss.com) - Framework de CSS
 - [Alpine.js](https://alpinejs.dev) - Framework de JavaScript
-
-## Contacto
-
-- Email: [tu@email.com]
-- GitHub: [tu-usuario]
