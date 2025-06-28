@@ -76,5 +76,5 @@ Este proyecto está bajo la licencia MIT. Consulta el archivo LICENSE para más 
 ## Contacto
 
 Para preguntas o soporte, por favor contacta a:
-- Email: oscar.meza24@gmail.com
+- Email: omeza2411@gmail.com
 - GitHub: OscarMeza24
