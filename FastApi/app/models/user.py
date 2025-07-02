@@ -11,4 +11,4 @@ class User(Base):
     age = Column(Integer)
 
     # Relaciones
-    posts = relationship("Post", back_populates="author")
+    # posts = relationship("Post", back_populates="author")

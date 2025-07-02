@@ -9,10 +9,10 @@ class UserObject(SQLAlchemyObjectType):
         model = User
         interfaces = (graphene.relay.Node,)
 
-    posts = List(lambda: PostObject)
+    #posts = List(lambda: PostObject)
 
-    def resolve_posts(self, info):
-        return self.posts
+    #def resolve_posts(self, info):
+    #    return self.posts
 
 class Query(ObjectType):
     # Definimos los campos que queremos consultar

@@ -1,6 +1,6 @@
 # Foolbank Volunteers API
 
-Una API RESTful desarrollada con FastAPI que proporciona endpoints básicos para operaciones de prueba.
+Una API desarrollada con FastAPI que proporciona endpoints REST y GraphQL para operaciones de prueba y gestión de usuarios.
 
 ## 🚀 Instalación
 
@@ -18,54 +18,102 @@ source venv/bin/activate  # En Linux/Mac
 
 3. Instala las dependencias:
 ```bash
-pip install -r requirements.txt
+pip install -r FastApi/requirements.txt
 ```
 
 ## 📚 Requisitos
 
 - Python 3.7 o superior
 - FastAPI
-- Uvicorn (para ejecutar el servidor)
+- Uvicorn
+- SQLAlchemy
+- Graphene y graphene-sqlalchemy
 
 ## 🏃‍♂️ Ejecución
 
 Para ejecutar el servidor de desarrollo:
 ```bash
-uvicorn FastApi.main:app --reload
+uvicorn FastApi.app.main:app --reload
 ```
 
 El servidor estará disponible en `http://localhost:8000`
 
-## 📚 Documentación de la API
+## 📦 Estructura del Proyecto
 
-La API incluye los siguientes endpoints:
+```
+FastApi/
+  app/
+    main.py                # Archivo principal de la API
+    database/
+      database.py          # Configuración de la base de datos SQLAlchemy
+    graphql/
+      schema.py            # Esquema GraphQL (consultas y tipos)
+    models/
+      user.py              # Modelo User de SQLAlchemy
+```
 
-### 1. Root Endpoint
-- **URL**: `/`
-- **Método**: GET
-- **Respuesta**: "Hello World"
+## 🚦 Endpoints REST
 
-### 2. ID Endpoint
-- **URL**: `/id/{id}`
-- **Método**: GET
-- **Parámetros**:
-  - `id`: número entero
-- **Respuesta**: Retorna el ID sumado a 10
+- **GET /**  
+  Mensaje de bienvenida.
 
-### 3. Login Endpoint
-- **URL**: `/login/{nombre}/{apellido}/{edad}`
-- **Método**: GET
-- **Parámetros**:
-  - `nombre`: nombre del usuario
-  - `apellido`: apellido del usuario
-  - `edad`: edad del usuario
-- **Respuesta**: Retorna un mensaje de bienvenida con el nombre, apellido y edad del usuario
+- **POST /users**  
+  Crea un usuario.  
+  **Body:**  
+  ```json
+  {
+    "name": "Nombre",
+    "last_name": "Apellido",
+    "age": 25
+  }
+  ```
+  **Respuesta:**  
+  Objeto usuario creado.
+
+## 🔎 Endpoint GraphQL
+
+- **POST /graphql**  
+  Permite realizar consultas y mutaciones GraphQL.
+
+  Ejemplo de consulta:
+  ```graphql
+  query {
+    users {
+      id
+      name
+      last_name
+      age
+    }
+  }
+  ```
+
+  Ejemplo de consulta individual:
+  ```graphql
+  query {
+    user(id: 1) {
+      name
+      last_name
+      age
+    }
+  }
+  ```
+
+## 🗄️ Base de Datos
+
+- Utiliza SQLite por defecto (`test.db`).
+- El modelo principal es `User` con los campos: `id`, `name`, `last_name`, `age`.
 
 ## 🛠️ Documentación Interactiva
 
 FastAPI genera automáticamente documentación interactiva:
 - Swagger UI: `http://localhost:8000/docs`
 - ReDoc: `http://localhost:8000/redoc`
+
+## 📄 Notas
+
+- El endpoint `/graphql` soporta métodos GET y POST.
+- El modelo `User` está preparado para relacionarse con un modelo `Post`, pero actualmente no existe el modelo `Post` en el proyecto.
+- El archivo [FastApi/app/graphql/schema.py](FastApi/app/graphql/schema.py) contiene la definición de los esquemas y resolvers de GraphQL.
 
 ## 📝 Licencia
 
