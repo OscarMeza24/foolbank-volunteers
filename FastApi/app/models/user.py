@@ -9,6 +9,3 @@ class User(Base):
     name = Column(String, index=True)
     last_name = Column(String, index=True)
     age = Column(Integer)
-
-    # Relaciones
-    # posts = relationship("Post", back_populates="author")

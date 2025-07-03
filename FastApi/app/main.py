@@ -11,7 +11,7 @@ async def graphql_endpoint(request: Request):
         return JSONResponse({"status": "ok"})
     
     query = await request.json()
-    result = await schema.execute_async(query["query"])
+    result = schema.execute(query["query"])
     
     if result.errors:
         return JSONResponse(
