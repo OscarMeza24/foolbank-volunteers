@@ -90,10 +90,7 @@ class Mutation:
     async def delete_header(self, header: HeadersDelete) -> bool:
         return await delete_header(header_id=header.header_id)
 
-
 schema = strawberry.Schema(query=Query, mutation=Mutation)
-
-# schema = strawberry.Schema(Query)
 
 graphql_app = GraphQLRouter(schema)
 
