@@ -20,7 +20,7 @@ Sigue estos pasos para descargar, instalar los requisitos y comenzar el servidor
 
 - Asegúrate de tener Python 3.7 o superior instalado.
 
-### Descarga e Instalación
+### Descarga e Instalación del Proyecto
 
 1. Clona el repositorio:
 
