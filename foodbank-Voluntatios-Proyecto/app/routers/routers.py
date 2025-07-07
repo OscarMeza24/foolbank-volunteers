@@ -13,75 +13,89 @@ db = SessionLocal()
 async def root():
     return {"message": "Bienvenido a la API de FoodBank"}
 
-@router.get("/headers", response_model=None, tags=["headers"])
-async def get_headers() -> List[HeadersModel]:
-    headers = db.query(Headers).all()
-    return headers
+@router.get("/usuarios", response_model=None, tags=["usuarios"])
+async def get_usuarios() -> List[UsuariosModel]:
+    usuarios = db.query(Usuarios).all()
+    return usuarios
 
 
-@router.post("/add-headers/", tags=["headers"])
-async def insert_header(header: HeadersModel):
-    new_header = Headers(
-        header_id=header.header_id,
-        name=header.name,
-        sales_rep_id=header.sales_rep_id,
-        buyer_id=header.buyer_id,
-        active=header.active
+@router.post("/add-usuarios/", tags=["usuarios"])
+async def insert_usuario(usuario: UsuariosModel):
+    new_usuario = Usuarios(
+        Usuarios_id=usuario.Usuarios_id,
+        nombre=usuario.nombre,
+        apellido=usuario.apellido,
+        correo=usuario.correo,
+        telefono=usuario.telefono,
+        tipo=usuario.tipo
+
     )
 
-    db.add(new_header)
+    db.add(new_usuario)
     db.commit()
-    db.refresh(new_header)
-    return new_header
+    db.refresh(new_usuario)
+    return new_usuario
 
 
-@router.put("/update-headers/", tags=["headers"])
-async def update_header(updated_header: HeadersModel):
-    print(updated_header)
-    existing_header = db.query(Headers).filter(Headers.header_id == updated_header.header_id).first()
+@router.put("/update-usuarios/", tags=["usuarios"])
+async def update_usuario(updated_usuario: UsuariosModel):
+    print(updated_usuario)
+    existing_usuario = db.query(Usuarios).filter(Usuarios.Usuarios_id == updated_usuario.Usuarios_id).first()
 
-    if existing_header:
-        # Update the attributes of the existing header
-        for field, value in jsonable_encoder(updated_header).items():
+    if existing_usuario:
+        # Update the attributes of the existing usuario
+        for field, value in jsonable_encoder(updated_usuario).items():
             print(field, value)
             if value:
-                setattr(existing_header, field, value)
+                setattr(existing_usuario, field, value)
 
         db.commit()
-        db.refresh(existing_header)
-        return existing_header
+        db.refresh(existing_usuario)
+        return existing_usuario
 
-    return {"message": "Header not found"}
+    return {"message": "Usuario not found"}
 
 
-@router.delete("/delete-headers/{header_id}", tags=["headers"])
-async def delete_header(header_id: int):
-    existing_header = db.query(Headers).filter(Headers.header_id == header_id).first()
+@router.delete("/delete-usuarios/{Usuarios_id}", tags=["usuarios"])
+async def delete_usuario(Usuarios_id: int):
+    existing_usuario = db.query(Usuarios).filter(Usuarios.Usuarios_id == Usuarios_id).first()
 
-    if existing_header:
-        db.delete(existing_header)
+    if existing_usuario:
+        db.delete(existing_usuario)
         db.commit()
         return True
 
     return False
 
 
-@router.get("/lines", response_model=None, tags=["lines"])
-async def get_lines()->List[LinesModel]:
-    buyers = db.query(Lines).all()
-    return buyers
+@router.get("/voluntarios", response_model=None, tags=["voluntarios"])
+async def get_voluntarios()->List[VoluntariosModel]:
+    voluntarios = db.query(Voluntarios).all()
+    return voluntarios
 
 
-@router.get("/buyers", response_model=None, tags=["buyers"])
-async def get_buyers() ->List[BuyersModel]:
-    buyers = db.query(Buyers).all()
-    return buyers
+@router.get("/eventos", response_model=None, tags=["eventos"])
+async def get_eventos() ->List[EventosModel]:
+    eventos = db.query(Eventos).all()
+    return eventos
 
 
-@router.post("/add-buyers/", tags=["buyers"])
-async def insert_buyer(buyer: BuyersModel):
-    new_buyer = Buyers(
-        buyer_id=buyer.buyer_id,
+@router.get("/asignaciones", response_model=None, tags=["asignaciones"])
+async def get_asignaciones() ->List[AsignacionesModel]:
+    asignaciones = db.query(Asignaciones).all()
+    return asignaciones
+
+
+@router.get("/feedback", response_model=None, tags=["feedback"])
+async def get_feedback() ->List[FeedbackModel]:
+    feedback = db.query(Feedback).all()
+    return feedback
+
+
+@router.post("/add-voluntarios/", tags=["voluntarios"])
+async def insert_voluntario(voluntario: VoluntariosModel):
+    new_voluntario = Voluntarios(
+        voluntarios_id=voluntario.voluntarios_id,
         name=buyer.name,
     )
     db.add(new_buyer)
@@ -90,55 +104,63 @@ async def insert_buyer(buyer: BuyersModel):
     return buyer
 
 
-@router.put("/update-buyer/", tags=["buyers"])
-async def update_buyer(updated_buyer: BuyersModel):
-    existing_buyer = db.query(Buyers).filter(Buyers.buyer_id == updated_buyer.buyer_id).first()
+@router.put("/update-voluntario/", tags=["voluntarios"])
+async def update_voluntario(updated_voluntario: VoluntariosModel):
+    existing_voluntario = db.query(Voluntarios).filter(Voluntarios.voluntarios_id == updated_voluntario.voluntarios_id).first()
 
-    if existing_buyer:
+    if existing_voluntario:
         # Update the attributes of the existing buyer excluding 'buyer_id'
-        update_item_encoded = jsonable_encoder(updated_buyer)
+        update_item_encoded = jsonable_encoder(updated_voluntario)
         for field, value in update_item_encoded.items():
-            if field != "buyer_id":
-                setattr(existing_buyer, field, value)
+            if field != "voluntarios_id":
+                setattr(existing_voluntario, field, value)
 
         db.commit()
-        db.refresh(existing_buyer)
-        return existing_buyer
+        db.refresh(existing_voluntario)
+        return existing_voluntario
 
-    return {"message": "Buyer not found"}
+    return {"message": "Voluntario not found"}
 
 
-@router.delete("/delete-buyer/{buyer_id}", tags=["buyers"])
-async def delete_buyer(buyer_id: int):
-    existing_buyer = db.query(Buyers).filter(Buyers.buyer_id == buyer_id).first()
+@router.delete("/delete-voluntario/{voluntario_id}", tags=["voluntarios"])
+async def delete_voluntario(voluntario_id: int):
+    existing_voluntario = db.query(Voluntarios).filter(Voluntarios.voluntarios_id == voluntario_id).first()
 
-    if existing_buyer:
-        db.delete(existing_buyer)
+    if existing_voluntario:
+        db.delete(existing_voluntario)
         db.commit()
         return True
 
     return False
 
 
-@router.get("/items", response_model=None, tags=["items"])
-async def get_items()->List[ItemsModel]:
-    items = db.query(Items).all()
-    return items
+@router.get("/eventos", response_model=None, tags=["eventos"])
+async def get_eventos()->List[EventosModel]:
+    eventos = db.query(Eventos).all()
+    return eventos
 
 
-@router.get("/markets", response_model=None, tags=["markets"])
-async def get_markets() -> List[MarketsModel]:
-    markets = db.query(Markets).all()
-    return markets
+@router.get("/asignaciones", response_model=None, tags=["asignaciones"])
+async def get_asignaciones() -> List[AsignacionesModel]:
+    asignaciones = db.query(Asignaciones).all()
+    return asignaciones
 
 
-@router.get("/resource", response_model=None, tags=["resource"])
-async def get_resource() -> List[ResourceModel]:
-    resource = db.query(Resource).all()
-    return resource
+@router.get("/feedback", response_model=None, tags=["feedback"])
+async def get_feedback() -> List[FeedbackModel]:
+    feedback = db.query(Feedback).all()
+    return feedback
 
 
-@router.get("/salesrep", response_model=None, tags=["salesrep"])
-async def get_salesrep()->List[SalesRepModel]:
-    salesrep = db.query(SalesRep).all()
-    return salesrep
+@router.get("/asignaciones", response_model=None, tags=["asignaciones"])
+async def get_asignaciones() -> List[AsignacionesModel]:
+    asignaciones = db.query(Asignaciones).all()
+    return asignaciones
+
+
+@router.get("/asignaciones", response_model=None, tags=["asignaciones"])
+async def get_asignaciones() -> List[AsignacionesModel]:
+    asignaciones = db.query(Asignaciones).all()
+    return asignaciones
+
+

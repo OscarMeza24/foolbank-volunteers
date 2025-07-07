@@ -4,82 +4,108 @@ import strawberry
 
 
 @strawberry.type
-class Headers:
-    header_id: int
-    name: Optional[str]
-    sales_rep_id: Optional[int]
-    buyer_id: Optional[int]
-    active: Optional[str]
-    buyers: Optional["Buyers"]
-    sales_rep: Optional["SalesRep"]
-    lines: Optional["Lines"]
+class Usuarios:
+    Usuarios_id: int
+    nombre: Optional[str]
+    apellido: Optional[str]
+    correo: Optional[str]
+    telefono: Optional[int]
+    tipo: Optional[str]
+    voluntarios: Optional["Voluntarios"]
 
 
 @strawberry.input
-class HeadersInput:
-    header_id: int
-    name: Optional[str]
-    sales_rep_id: Optional[int]
-    buyer_id: Optional[int]
-    active: Optional[str]
+class UsuariosInput:
+    Usuarios_id: int
+    nombre: Optional[str]
+    apellido: Optional[str]
+    correo: Optional[str]
+    telefono: Optional[int]
+    tipo: Optional[str]
 
 
 @strawberry.input
-class HeadersDelete:
-    header_id: int
+class UsuariosDelete:
+    Usuarios_id: int
 
 
 @strawberry.type
-class Lines:
-    line_id: int
-    header_id: int
-    name: Optional[str]
-    market_id: int
-    item_id: int
-    creation_date: str
-    markets: Optional["Markets"]
-    items: Optional["Items"]
+class Voluntarios:
+    voluntarios_id: int
+    habilidades: Optional[str]
+    disponibilidad: Optional[str]
+    usuario_id: Optional[int]
+    usuario: Optional["Usuarios"]
 
 
 @strawberry.type
-class Buyers:
-    buyer_id: int
-    name: Optional[str]
+class Eventos:
+    eventos_id: int
+    nombre: Optional[str]
+    fecha: Optional[str]
+    hora: Optional[str]
+    lugar: Optional[str]
+    tipo: Optional[str]
+    estado: Optional[str]
 
 
 @strawberry.input
-class BuyersInput:
-    buyer_id: int
-    name: Optional[str]
+class EventosInput:
+    eventos_id: int
+    nombre: Optional[str]
+    fecha: Optional[str]
+    hora: Optional[str]
+    lugar: Optional[str]
+    tipo: Optional[str]
+    estado: Optional[str]
 
 
 @strawberry.input
-class BuyersDelete:
-    buyer_id: int
+class EventosDelete:
+    eventos_id: int
 
 
 @strawberry.type
-class Items:
-    item_id: int
-    name: Optional[str]
-    description: Optional[str]
+class Asignaciones:
+    asignaciones_id: int
+    voluntario_id: Optional[int]
+    evento_id: Optional[int]
+    estado: Optional[str]
 
 
 @strawberry.type
-class Markets:
-    market_id: int
-    name: Optional[str]
-    location: Optional[str]
+class Asignaciones:
+    asignaciones_id: int
+    voluntario_id: Optional[int]
+    evento_id: Optional[int]
+    estado: Optional[str]
 
 
 @strawberry.type
-class Resource:
-    resource_id: int
-    name: Optional[str]
+class Eventos:
+    eventos_id: int
+    nombre: Optional[str]
+    fecha: Optional[str]
+    hora: Optional[str]
+    lugar: Optional[str]
+    tipo: Optional[str]
+    estado: Optional[str]
 
 
 @strawberry.type
-class SalesRep:
-    sales_rep_id: int
-    resource_id: int
-    resource: Optional[Resource]
+class Feedback:
+    feedback_id: int
+    voluntario_id: Optional[int]
+    evento_id: Optional[int]
+    calificacion: Optional[int]
+    comentario: Optional[str]
+
+
+@strawberry.type
+class Feedback:
+    feedback_id: int
+    voluntario_id: Optional[int]
+    evento_id: Optional[int]
+    calificacion: Optional[int]
+    comentario: Optional[str]
+

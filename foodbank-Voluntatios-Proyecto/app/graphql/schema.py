@@ -2,12 +2,15 @@ from typing import List
 
 import strawberry
 import asyncio
-from app.graphql.definitions import Headers, Lines, Buyers, Items, Markets, SalesRep, Resource, BuyersInput,\
-    BuyersDelete, HeadersInput, HeadersDelete
+from app.graphql.definitions import Usuarios, Voluntarios, Eventos, Asignaciones, Feedback, UsuariosInput,\
+    UsuariosDelete, VoluntariosInput, VoluntariosDelete, EventosInput, EventosDelete, AsignacionesInput,\
+    AsignacionesDelete, FeedbackInput, FeedbackDelete
 
 from strawberry.fastapi import GraphQLRouter
-from app.routers.routers import get_headers, get_lines, get_buyers, get_items, get_markets, get_resource,\
-    get_salesrep, insert_buyer, update_buyer, delete_buyer, insert_header, update_header, delete_header
+from app.routers.routers import get_usuarios, get_voluntarios, get_eventos, get_asignaciones, get_feedback,\
+    insert_usuario, update_usuario, delete_usuario, insert_voluntario, update_voluntario, delete_voluntario,\
+    insert_evento, update_evento, delete_evento, insert_asignacion, update_asignacion, delete_asignacion,\
+    insert_feedback, update_feedback, delete_feedback
 
 
 async def sleep_for_2_seconds(name: str, time: int) -> str:
@@ -18,36 +21,24 @@ async def sleep_for_2_seconds(name: str, time: int) -> str:
 @strawberry.type
 class Query:
     @strawberry.field
-    async def get_headers(self) -> List[Headers]:
-        return await get_headers()
+    async def get_usuarios(self) -> List[Usuarios]:
+        return await get_usuarios()
 
     @strawberry.field
-    async def get_lines(self) -> List[Lines]:
-        return await get_lines()
+    async def get_voluntarios(self) -> List[Voluntarios]:
+        return await get_voluntarios()
 
     @strawberry.field
-    async def get_buyers(self) -> List[Buyers]:
-        return await get_buyers()
+    async def get_eventos(self) -> List[Eventos]:
+        return await get_eventos()
 
     @strawberry.field
-    async def get_items(self) -> List[Items]:
-        return await get_items()
+    async def get_asignaciones(self) -> List[Asignaciones]:
+        return await get_asignaciones()
 
     @strawberry.field
-    async def get_markets(self) -> List[Markets]:
-        return await get_markets()
-
-    @strawberry.field
-    async def get_resource(self) -> List[Resource]:
-        return await get_resource()
-
-    @strawberry.field
-    async def get_salesrep(self) -> List[SalesRep]:
-        return await get_salesrep()
-
-    @strawberry.field
-    async def get_salesrep(self) -> List[SalesRep]:
-        return await get_salesrep()
+    async def get_feedback(self) -> List[Feedback]:
+        return await get_feedback()
 
     @strawberry.field
     async def test_sleep_1(self) -> str:
@@ -67,28 +58,64 @@ class Query:
 @strawberry.type
 class Mutation:
     @strawberry.mutation
-    async def create_buyer(self, buyer: BuyersInput) -> Buyers:
-        return await insert_buyer(buyer)
+    async def create_usuario(self, usuario: UsuariosInput) -> Usuarios:
+        return await insert_usuario(usuario)
 
     @strawberry.mutation
-    async def update_buyer(self, buyer: BuyersInput) -> Buyers:
-        return await update_buyer(buyer)
+    async def update_usuario(self, usuario: UsuariosInput) -> Usuarios:
+        return await update_usuario(usuario)
 
     @strawberry.mutation
-    async def delete_buyer(self, buyer: BuyersDelete) -> bool:
-        return await delete_buyer(buyer_id=buyer.buyer_id)
+    async def delete_usuario(self, usuario: UsuariosDelete) -> bool:
+        return await delete_usuario(usuario_id=usuario.usuario_id)
 
     @strawberry.mutation
-    async def create_header(self, header: HeadersInput) -> Headers:
-        return await insert_header(header)
+    async def create_voluntario(self, voluntario: VoluntariosInput) -> Voluntarios:
+        return await insert_voluntario(voluntario)
 
     @strawberry.mutation
-    async def update_header(self, header: HeadersInput) -> Headers:
-        return await update_header(header)
+    async def update_voluntario(self, voluntario: VoluntariosInput) -> Voluntarios:
+        return await update_voluntario(voluntario)
 
     @strawberry.mutation
-    async def delete_header(self, header: HeadersDelete) -> bool:
-        return await delete_header(header_id=header.header_id)
+    async def delete_voluntario(self, voluntario: VoluntariosDelete) -> bool:
+        return await delete_voluntario(voluntario_id=voluntario.voluntario_id)
+
+    @strawberry.mutation
+    async def create_evento(self, evento: EventosInput) -> Eventos:
+        return await insert_evento(evento)
+
+    @strawberry.mutation
+    async def update_evento(self, evento: EventosInput) -> Eventos:
+        return await update_evento(evento)
+
+    @strawberry.mutation
+    async def delete_evento(self, evento: EventosDelete) -> bool:
+        return await delete_evento(evento_id=evento.evento_id)
+
+    @strawberry.mutation
+    async def create_asignacion(self, asignacion: AsignacionesInput) -> Asignaciones:
+        return await insert_asignacion(asignacion)
+
+    @strawberry.mutation
+    async def update_asignacion(self, asignacion: AsignacionesInput) -> Asignaciones:
+        return await update_asignacion(asignacion)
+
+    @strawberry.mutation
+    async def delete_asignacion(self, asignacion: AsignacionesDelete) -> bool:
+        return await delete_asignacion(asignacion_id=asignacion.asignacion_id)
+
+    @strawberry.mutation
+    async def create_feedback(self, feedback: FeedbackInput) -> Feedback:
+        return await insert_feedback(feedback)
+
+    @strawberry.mutation
+    async def update_feedback(self, feedback: FeedbackInput) -> Feedback:
+        return await update_feedback(feedback)
+
+    @strawberry.mutation
+    async def delete_feedback(self, feedback: FeedbackDelete) -> bool:
+        return await delete_feedback(feedback_id=feedback.feedback_id)
 
 schema = strawberry.Schema(query=Query, mutation=Mutation)
 

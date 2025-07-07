@@ -1,3 +1,4 @@
+import numbers
 from typing import List
 
 from sqlalchemy import Column, Integer, String, Text, ForeignKey, UniqueConstraint
@@ -5,71 +6,52 @@ from sqlalchemy.orm import relationship, Mapped, mapped_column
 from app.database.database import Base
 
 
-class Headers(Base):
-    __tablename__ = "headers"
+class Usuarios(Base):
+    __tablename__ = "Usuarios"
 
-    header_id = Column(Integer, primary_key=True)
-    name = Column(String)
-    sales_rep_id = Column(Integer, ForeignKey('salesrep.sales_rep_id'))
-    buyer_id = Column(Integer, ForeignKey('buyers.buyer_id'))
-    active = Column(String)
-    buyers: Mapped["Buyers"] = relationship(back_populates="headers")
-    sales_rep:  Mapped["SalesRep"] = relationship(back_populates="headers")
-    lines:  Mapped["Lines"] = relationship(back_populates="headers")
+    Usuarios_id = Column(Integer, primary_key=True)
+    nombre = Column(String)
+    apellido = Column(String)
+    correo = Column(String)
+    telefono = Column(numbers.Int)
+    tipo = Column(String)
 
+class Voluntarios(Base):
+    __tablename__ = "Voluntarios"
+    voluntarios_id = Column(Integer, primary_key=True)
+    habilidades = Column(String)
+    disponibilidad = Column(String)
+    usuario_id = Column(Integer, ForeignKey("Usuarios.Usuarios_id"))
+    usuario = relationship("Usuarios", back_populates="voluntarios")
 
-class Lines(Base):
-    __tablename__ = "lines"
+class Eventos(Base):
+    __tablename__ = "Eventos"
+    eventos_id = Column(Integer, primary_key=True)
+    nombre = Column(String)
+    fecha = Column(String)
+    hora = Column(String)
+    ubicacion = Column(String)
+    voluntarios_necesarios = Column(Integer)
+    descripcion_eventos = Column(Text)
 
-    line_id = Column(Integer, primary_key=True)
-    header_id = Column(Integer, ForeignKey('headers.header_id'))
-    name = Column(String)
-    market_id = Column(Integer, ForeignKey('markets.market_id'))
-    item_id = Column(Integer, ForeignKey('items.item_id'))
-    creation_date = Column(String)
-    headers: Mapped["Headers"] = relationship(back_populates="lines")
-    markets: Mapped["Markets"] = relationship(back_populates="lines")
-    items: Mapped["Items"] = relationship(back_populates="lines")
-
-
-class Buyers(Base):
-    __tablename__ = "buyers"
-
-    buyer_id: Mapped[int] = mapped_column(primary_key=True)
-    name = Column(String)
-    headers: Mapped["Headers"] = relationship(back_populates="buyers")
-
-
-class Items(Base):
-    __tablename__ = "items"
-
-    item_id = Column(Integer, primary_key=True)
-    name = Column(String)
-    description = Column(String)
-    lines: Mapped["Lines"] = relationship(back_populates="items")
-
-
-class Markets(Base):
-    __tablename__ = "markets"
-
-    market_id = Column(Integer, primary_key=True)
-    name = Column(String)
-    location = Column(String)
-    lines: Mapped["Lines"] = relationship(back_populates="markets")
-
-
-class Resource(Base):
-    __tablename__ = "resource"
-
-    resource_id = Column(Integer, primary_key=True)
-    name = Column(String)
-    sales_rep: Mapped["SalesRep"] = relationship(back_populates="resource")
-
-
-class SalesRep(Base):
-    __tablename__ = "salesrep"
-
-    sales_rep_id = Column(Integer, primary_key=True)
-    resource_id = Column(Integer, ForeignKey('resource.resource_id'))
-    headers: Mapped["Headers"] = relationship(back_populates="sales_rep")
-    resource: Mapped["Resource"] = relationship(back_populates="sales_rep")
+class Asignaciones(Base):
+    __tablename__ = "Asignaciones"
+    asignaciones_id = Column(Integer, primary_key=True)
+    evento_id = Column(Integer, ForeignKey("Eventos.eventos_id"))
+    voluntario_id = Column(Integer, ForeignKey("Voluntarios.voluntarios_id"))
+    rol = Column(String)
+    estado = Column(String)
+    fecha_asignacion = Column(String)
+    evento = relationship("Eventos", back_populates="asignaciones")
+    voluntario = relationship("Voluntarios", back_populates="asignaciones")
+    
+class feedback(Base):
+    __tablename__ = "feedback"
+    feedback_id = Column(Integer, primary_key=True)
+    evento_id = Column(Integer, ForeignKey("Eventos.eventos_id"))
+    voluntario_id = Column(Integer, ForeignKey("Voluntarios.voluntarios_id"))
+    calificacion = Column(Integer)
+    comentario = Column(Text)
+    evento = relationship("Eventos", back_populates="feedback")
+    voluntario = relationship("Voluntarios", back_populates="feedback")
+    
