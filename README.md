@@ -58,143 +58,173 @@ Visita http://127.0.0.1:8000/graphql en tu navegador para acceder al Playground 
 
 ### Ejemplos de Consultas GraphQL
 
-#### Obtener Datos de Recursos
+#### 1. Usuarios
 
 ```graphql
-query MyQuery {
-  getHeaders {
-    active
-    buyerId
-    headerId
-    name
-    salesRepId
-    lines {
-      creationDate
-      headerId
-      itemId
-      lineId
-      marketId
-      name
-      items {
-        description
-        itemId
-        name
-      }
-      markets {
-        location
-        marketId
-        name
-      }
-    }
-    salesRep {
-      resourceId
-      salesRepId
-      resource {
-        name
-        resourceId
-      }
-    }
-    buyers {
-      buyerId
-      name
-    }
-  }
-}
-```
-### Respuesta:
-
-```
-{
-  "data": {
-    "getHeaders": [
-      {
-        "active": "Y",
-        "buyerId": 1003,
-        "headerId": 1,
-        "name": "Header Name 1",
-        "salesRepId": 102,
-        "lines": {
-          "creationDate": "2023-01-01",
-          "headerId": 1,
-          "itemId": 701,
-          "lineId": 55001,
-          "marketId": 2201,
-          "name": "Line Name 1",
-          "items": {
-            "description": "gold",
-            "itemId": 701,
-            "name": "gold"
-          },
-          "markets": {
-            "location": "Europe",
-            "marketId": 2201,
-            "name": "NotSo Wet Market"
-          }
-        },
-        "salesRep": {
-          "resourceId": 12,
-          "salesRepId": 102,
-          "resource": {
-            "name": "Jaba Maba",
-            "resourceId": 12
-          }
-        },
-        "buyers": {
-          "buyerId": 1003,
-          "name": "Simon Sims"
-        }
-      },
-      {
-        "active": "Y",
-        "buyerId": 1002,
-        "headerId": 2,
-        "name": "Header Name 2",
-        "salesRepId": 105,
-        "lines": {
-          "creationDate": "2022-01-05",
-          "headerId": 2,
-          "itemId": 701,
-          "lineId": 55003,
-          "marketId": 2203,
-          "name": "Line Name 3",
-          "items": {
-            "description": "gold",
-            "itemId": 701,
-            "name": "gold"
-          },
-          "markets": {
-            "location": "Africa",
-            "marketId": 2203,
-            "name": "Rainy Days Market"
-          }
-        },
-        "salesRep": {
-          "resourceId": 15,
-          "salesRepId": 105,
-          "resource": {
-            "name": "Viper Song",
-            "resourceId": 15
-          }
-        },
-        "buyers": {
-          "buyerId": 1002,
-          "name": "Bobby DropTable"
-        }
-      },
-    ]
+query GetUsuarios {
+  usuarios {
+    Usuarios_id
+    nombre
+    apellido
+    correo
+    telefono
+    tipo
   }
 }
 ```
 
-## Mutación:
+#### 2. Voluntarios
 
+```graphql
+query GetVoluntarios {
+  voluntarios {
+    voluntarios_id
+    nombre
+    apellido
+    correo
+    telefono
+    estado
+  }
+}
 ```
-mutation MyMutation {
-  updateHeader(header: {name: "Mutation Update", headerId: 6}) {
-    name
-    salesRepId
-    buyerId
-    active
+
+#### 3. Eventos
+
+```graphql
+query GetEventos {
+  eventos {
+    eventos_id
+    nombre
+    fecha
+    hora
+    lugar
+    tipo
+    estado
+  }
+}
+```
+
+#### 4. Asignaciones
+
+```graphql
+query GetAsignaciones {
+  asignaciones {
+    asignaciones_id
+    evento_id
+    voluntario_id
+    estado
+  }
+}
+```
+
+#### 5. Feedback
+
+```graphql
+query GetFeedback {
+  feedback {
+    feedback_id
+    evento_id
+    voluntario_id
+    calificacion
+    comentario
+  }
+}
+```
+
+### Ejemplos de Mutaciones
+
+#### 1. Crear Usuario
+
+```graphql
+mutation CreateUsuario {
+  createUsuario(usuario: {
+    nombre: "Juan"
+    apellido: "Perez"
+    correo: "juan@example.com"
+    telefono: "123456789"
+    tipo: "voluntario"
+  }) {
+    Usuarios_id
+    nombre
+    correo
+  }
+}
+```
+
+#### 2. Crear Evento
+
+```graphql
+mutation CreateEvento {
+  createEvento(evento: {
+    nombre: "Distribución de alimentos"
+    fecha: "2025-07-15"
+    hora: "14:00"
+    lugar: "Plaza Central"
+    tipo: "distribucion"
+    estado: "pendiente"
+  }) {
+    eventos_id
+    nombre
+    fecha
+  }
+}
+```
+
+#### 3. Asignar Voluntario a Evento
+
+```graphql
+mutation CreateAsignacion {
+  createAsignacion(asignacion: {
+    evento_id: 1
+    voluntario_id: 1
+    estado: "confirmado"
+  }) {
+    asignaciones_id
+    estado
+  }
+}
+```
+
+#### 4. Dar Feedback
+
+```graphql
+mutation CreateFeedback {
+  createFeedback(feedback: {
+    evento_id: 1
+    voluntario_id: 1
+    calificacion: 5
+    comentario: "Excelente experiencia"
+  }) {
+    feedback_id
+    calificacion
+    comentario
+  }
+}
+```
+
+### Ejemplo de Consulta Compleja
+
+```graphql
+query GetEventosConVoluntarios {
+  eventos {
+    eventos_id
+    nombre
+    fecha
+    lugar
+    asignaciones {
+      voluntario {
+        nombre
+        apellido
+      }
+      estado
+    }
+    feedback {
+      voluntario {
+        nombre
+      }
+      calificacion
+      comentario
+    }
   }
 }
 ```

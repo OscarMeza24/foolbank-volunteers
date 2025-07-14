@@ -8,9 +8,7 @@ from app.graphql.definitions import Usuarios, Voluntarios, Eventos, Asignaciones
 
 from strawberry.fastapi import GraphQLRouter
 from app.routers.routers import get_usuarios, get_voluntarios, get_eventos, get_asignaciones, get_feedback,\
-    insert_usuario, update_usuario, delete_usuario, insert_voluntario, update_voluntario, delete_voluntario,\
-    insert_evento, update_evento, delete_evento, insert_asignacion, update_asignacion, delete_asignacion,\
-    insert_feedback, update_feedback, delete_feedback
+    insert_usuario, update_usuario, delete_usuario, insert_voluntario, update_voluntario, delete_voluntario
 
 
 async def sleep_for_2_seconds(name: str, time: int) -> str:
@@ -120,4 +118,3 @@ class Mutation:
 schema = strawberry.Schema(query=Query, mutation=Mutation)
 
 graphql_app = GraphQLRouter(schema)
-

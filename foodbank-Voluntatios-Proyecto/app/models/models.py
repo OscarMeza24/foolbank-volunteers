@@ -1,8 +1,7 @@
-import numbers
 from typing import List
 
 from sqlalchemy import Column, Integer, String, Text, ForeignKey, UniqueConstraint
-from sqlalchemy.orm import relationship, Mapped, mapped_column
+from sqlalchemy.orm import relationship
 from app.database.database import Base
 
 
@@ -13,8 +12,9 @@ class Usuarios(Base):
     nombre = Column(String)
     apellido = Column(String)
     correo = Column(String)
-    telefono = Column(numbers.Int)
+    telefono = Column(Integer)
     tipo = Column(String)
+    voluntarios = relationship("Voluntarios", back_populates="usuario")
 
 class Voluntarios(Base):
     __tablename__ = "Voluntarios"
@@ -23,6 +23,8 @@ class Voluntarios(Base):
     disponibilidad = Column(String)
     usuario_id = Column(Integer, ForeignKey("Usuarios.Usuarios_id"))
     usuario = relationship("Usuarios", back_populates="voluntarios")
+    asignaciones = relationship("Asignaciones", back_populates="voluntario")
+    feedback = relationship("Feedback", back_populates="voluntario")
 
 class Eventos(Base):
     __tablename__ = "Eventos"
@@ -33,6 +35,8 @@ class Eventos(Base):
     ubicacion = Column(String)
     voluntarios_necesarios = Column(Integer)
     descripcion_eventos = Column(Text)
+    asignaciones = relationship("Asignaciones", back_populates="evento")
+    feedback = relationship("Feedback", back_populates="evento")
 
 class Asignaciones(Base):
     __tablename__ = "Asignaciones"
@@ -45,7 +49,7 @@ class Asignaciones(Base):
     evento = relationship("Eventos", back_populates="asignaciones")
     voluntario = relationship("Voluntarios", back_populates="asignaciones")
     
-class feedback(Base):
+class Feedback(Base):
     __tablename__ = "feedback"
     feedback_id = Column(Integer, primary_key=True)
     evento_id = Column(Integer, ForeignKey("Eventos.eventos_id"))
@@ -54,4 +58,3 @@ class feedback(Base):
     comentario = Column(Text)
     evento = relationship("Eventos", back_populates="feedback")
     voluntario = relationship("Voluntarios", back_populates="feedback")
-    

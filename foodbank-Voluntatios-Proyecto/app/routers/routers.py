@@ -1,7 +1,7 @@
 from typing import List
 from fastapi import HTTPException
-from app.models.models import Headers, Lines, Buyers, Items, Markets, Resource, SalesRep
-from app.models.schema import HeadersModel, LinesModel, BuyersModel, ItemsModel, MarketsModel, ResourceModel, SalesRepModel
+from app.models.models import Usuarios, Voluntarios, Eventos, Asignaciones, Feedback
+from app.models.schema import UsuariosModel, VoluntariosModel, EventosModel, AsignacionesModel, FeedbackModel
 from fastapi import APIRouter
 from app.database.database import SessionLocal
 from fastapi.encoders import jsonable_encoder
@@ -96,12 +96,12 @@ async def get_feedback() ->List[FeedbackModel]:
 async def insert_voluntario(voluntario: VoluntariosModel):
     new_voluntario = Voluntarios(
         voluntarios_id=voluntario.voluntarios_id,
-        name=buyer.name,
+        name=voluntario.name,
     )
-    db.add(new_buyer)
+    db.add(new_voluntario)
     db.commit()
-    db.refresh(new_buyer)
-    return buyer
+    db.refresh(new_voluntario)
+    return new_voluntario
 
 
 @router.put("/update-voluntario/", tags=["voluntarios"])
@@ -156,11 +156,3 @@ async def get_feedback() -> List[FeedbackModel]:
 async def get_asignaciones() -> List[AsignacionesModel]:
     asignaciones = db.query(Asignaciones).all()
     return asignaciones
-
-
-@router.get("/asignaciones", response_model=None, tags=["asignaciones"])
-async def get_asignaciones() -> List[AsignacionesModel]:
-    asignaciones = db.query(Asignaciones).all()
-    return asignaciones
-
-
