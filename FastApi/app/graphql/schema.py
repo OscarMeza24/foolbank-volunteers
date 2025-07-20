@@ -8,8 +8,9 @@ from app.graphql.definitions import Usuarios, Voluntarios, Eventos, Asignaciones
 
 from strawberry.fastapi import GraphQLRouter
 from app.routers.routers import get_usuarios, get_voluntarios, get_eventos, get_asignaciones, get_feedback,\
-    insert_usuario, update_usuario, delete_usuario, insert_voluntario, update_voluntario, delete_voluntario
-
+    insert_usuario, update_usuario, delete_usuario, insert_voluntario, update_voluntario, delete_voluntario,\
+    insert_asignacion, update_asignacion, insert_evento, insert_feedback, update_asignacion, update_evento,\
+    update_feedback, update_voluntario, delete_asignacion, delete_evento, delete_feedback
 
 async def sleep_for_2_seconds(name: str, time: int) -> str:
     await asyncio.sleep(time)
@@ -65,7 +66,9 @@ class Mutation:
 
     @strawberry.mutation
     async def delete_usuario(self, usuario: UsuariosDelete) -> bool:
-        return await delete_usuario(usuario_id=usuario.usuario_id)
+        # Usar getattr para acceder al atributo con el nombre correcto
+        usuario_id = getattr(usuario, 'Usuarios_id', getattr(usuario, 'usuarios_id', None))
+        return await delete_usuario(Usuarios_id=usuario_id)
 
     @strawberry.mutation
     async def create_voluntario(self, voluntario: VoluntariosInput) -> Voluntarios:
@@ -77,7 +80,7 @@ class Mutation:
 
     @strawberry.mutation
     async def delete_voluntario(self, voluntario: VoluntariosDelete) -> bool:
-        return await delete_voluntario(voluntario_id=voluntario.voluntario_id)
+        return await delete_voluntario(voluntario_id=voluntario.voluntarios_id)
 
     @strawberry.mutation
     async def create_evento(self, evento: EventosInput) -> Eventos:
@@ -89,7 +92,7 @@ class Mutation:
 
     @strawberry.mutation
     async def delete_evento(self, evento: EventosDelete) -> bool:
-        return await delete_evento(evento_id=evento.evento_id)
+        return await delete_evento(evento_id=evento.eventos_id)
 
     @strawberry.mutation
     async def create_asignacion(self, asignacion: AsignacionesInput) -> Asignaciones:
@@ -101,7 +104,7 @@ class Mutation:
 
     @strawberry.mutation
     async def delete_asignacion(self, asignacion: AsignacionesDelete) -> bool:
-        return await delete_asignacion(asignacion_id=asignacion.asignacion_id)
+        return await delete_asignacion(asignacion_id=asignacion.asignaciones_id)
 
     @strawberry.mutation
     async def create_feedback(self, feedback: FeedbackInput) -> Feedback:

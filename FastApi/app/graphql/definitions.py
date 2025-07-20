@@ -57,20 +57,20 @@ class Eventos:
     nombre: Optional[str]
     fecha: Optional[str]
     hora: Optional[str]
-    lugar: Optional[str]
-    tipo: Optional[str]
-    estado: Optional[str]
+    ubicacion: Optional[str]
+    voluntarios_necesarios: Optional[int]
+    descripcion_eventos: Optional[str]
 
 
 @strawberry_input
 class EventosInput:
     eventos_id: int
-    nombre: Optional[str]
-    fecha: Optional[str]
-    hora: Optional[str]
-    lugar: Optional[str]
-    tipo: Optional[str]
-    estado: Optional[str]
+    nombre: Optional[str] = None
+    fecha: Optional[str] = None
+    hora: Optional[str] = None
+    ubicacion: Optional[str] = None
+    voluntarios_necesarios: Optional[int] = None
+    descripcion_eventos: Optional[str] = None
 
 
 @strawberry_input
