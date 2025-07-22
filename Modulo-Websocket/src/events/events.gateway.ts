@@ -28,7 +28,7 @@ type WebSocketEvent =
   | 'private'
   | 'message'
   | 'notification'
-  | string; // This allows other strings while maintaining autocompletion
+  | string;
 
 interface MessagePayload<T = BaseMessageData> {
   event: WebSocketEvent;
