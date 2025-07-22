@@ -39,7 +39,8 @@ async def startup():
     websocket_client.on("message", handle_websocket_message)
     
     # Iniciar la conexión WebSocket en segundo plano
-    asyncio.create_task(connect_websocket())
+    task = asyncio.create_task(connect_websocket())
+    return task
 
 async def handle_connection_success(data: Dict[str, Any]):
     """Maneja el evento de conexión exitosa."""
