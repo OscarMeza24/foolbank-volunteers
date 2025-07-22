@@ -4,7 +4,7 @@ from typing import Optional, List
 
 @dataclass
 class UsuariosModel:
-    Usuarios_id: int
+    usuarios_id: int
     nombre: Optional[str]
     apellido: Optional[str]
     correo: Optional[str]

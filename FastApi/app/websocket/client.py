@@ -89,7 +89,7 @@ class WebSocketClient:
                 self.connected = False
                 await asyncio.sleep(1)
 
-    def _handle_message(self, message: str):
+    async def _handle_message(self, message: str):
         """Procesa un mensaje recibido del servidor."""
         try:
             data = json.loads(message)
@@ -97,7 +97,8 @@ class WebSocketClient:
             
             if event and event in self._message_handlers:
                 for handler in self._message_handlers[event]:
-                    asyncio.create_task(handler(data.get('data')))
+                    task = asyncio.create_task(handler(data.get('data')))
+                    await task
                     
         except json.JSONDecodeError:
             logger.warning(f"Mensaje no es un JSON válido: {message}")
