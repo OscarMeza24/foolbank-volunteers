@@ -118,7 +118,8 @@ class WebSocketClient:
         if self.connection:
             try:
                 await self.connection.close()
-            except:
+            except Exception as e:
+                logger.error(f"Error al cerrar la conexión WebSocket: {e}")
                 pass
             
         await asyncio.sleep(self.reconnect_delay)

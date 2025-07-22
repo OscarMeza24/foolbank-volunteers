@@ -91,7 +91,7 @@ async def test_websocket():
         sent = await websocket_client.send_message(
             "test_room",
             "test_message",
-            {"message": "Hello from FastAPI", "timestamp": str(datetime.utcnow())}
+            {"message": "Hello from FastAPI", "timestamp": str(datetime.now(timezone.utc))}
         )
         
         if sent:
