@@ -2,13 +2,14 @@ from typing import List
 
 from sqlalchemy import Column, Integer, String, Text, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship
+from sqlalchemy.util import u
 from app.database.database import Base
 
 
 class Usuarios(Base):
     __tablename__ = "Usuarios"
 
-    Usuarios_id = Column(Integer, primary_key=True)
+    usuarios_id = Column(Integer, primary_key=True)
     nombre = Column(String)
     apellido = Column(String)
     correo = Column(String)
@@ -21,7 +22,7 @@ class Voluntarios(Base):
     voluntarios_id = Column(Integer, primary_key=True)
     habilidades = Column(String)
     disponibilidad = Column(String)
-    usuario_id = Column(Integer, ForeignKey("Usuarios.Usuarios_id"))
+    usuario_id = Column(Integer, ForeignKey("Usuarios.usuarios_id"))
     usuario = relationship("Usuarios", back_populates="voluntarios")
     asignaciones = relationship("Asignaciones", back_populates="voluntario")
     feedback = relationship("Feedback", back_populates="voluntario")

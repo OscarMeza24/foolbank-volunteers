@@ -56,9 +56,9 @@ async def update_usuario(updated_usuario: UsuariosModel):
     return {"message": "Usuario not found"}
 
 
-@router.delete("/delete-usuarios/{Usuarios_id}", tags=["usuarios"])
-async def delete_usuario(Usuarios_id: int):
-    existing_usuario = db.query(Usuarios).filter(Usuarios.Usuarios_id == Usuarios_id).first()
+@router.delete("/delete-usuarios/{usuarios_id}", tags=["usuarios"])
+async def delete_usuario(usuarios_id: int):
+    existing_usuario = db.query(Usuarios).filter(Usuarios.usuarios_id == usuarios_id).first()
 
     if existing_usuario:
         db.delete(existing_usuario)

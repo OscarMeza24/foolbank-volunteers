@@ -6,7 +6,7 @@ from strawberry import type as strawberry_type, input as strawberry_input
 
 @strawberry_type
 class Usuarios:
-    Usuarios_id: int
+    usuarios_id: int
     nombre: Optional[str]
     apellido: Optional[str]
     correo: Optional[str]
@@ -17,7 +17,7 @@ class Usuarios:
 
 @strawberry_input
 class UsuariosInput:
-    Usuarios_id: int
+    usuarios_id: int
     nombre: Optional[str]
     apellido: Optional[str]
     correo: Optional[str]
@@ -27,7 +27,7 @@ class UsuariosInput:
 
 @strawberry_input
 class UsuariosDelete:
-    Usuarios_id: int
+    usuarios_id: int
 
 
 @strawberry_type
