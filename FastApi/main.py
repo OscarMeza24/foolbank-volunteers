@@ -1,20 +1,22 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends, HTTPException, status
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime
 from app.websocket.client import websocket_client
 import asyncio
 import logging
 from typing import Dict, Any
-from app.database.database import engine, Base
+from app.database.database import engine, Base, get_db
 from app.graphql.schema import graphql_app
 from app.routers import routers
-import logging
+from app.auth.routes import router as auth_router
 
 # Configurar logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-app = FastAPI()
+app = FastAPI(title="FoolBank Volunteers API",
+              description="API para la gestión de voluntarios de FoolBank",
+              version="1.0.0")
 
 # Configuración de CORS
 app.add_middleware(
@@ -28,6 +30,7 @@ app.add_middleware(
 # Incluir routers existentes
 app.include_router(graphql_app, prefix="/graphql")
 app.include_router(routers.router)
+app.include_router(auth_router, prefix="/api/v1")
 
 @app.on_event("startup")
 async def startup():
@@ -91,7 +94,7 @@ async def test_websocket():
         sent = await websocket_client.send_message(
             "test_room",
             "test_message",
-            {"message": "Hello from FastAPI", "timestamp": str(datetime.now(timezone.utc))}
+            {"message": "Hello from FastAPI", "timestamp": str(datetime.now())}
         )
         
         if sent:

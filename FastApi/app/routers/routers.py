@@ -22,7 +22,7 @@ async def get_usuarios() -> List[UsuariosModel]:
 @router.post("/add-usuarios/", tags=["usuarios"])
 async def insert_usuario(usuario: UsuariosModel):
     new_usuario = Usuarios(
-        Usuarios_id=usuario.Usuarios_id,
+        usuarios_id=usuario.usuarios_id,
         nombre=usuario.nombre,
         apellido=usuario.apellido,
         correo=usuario.correo,
@@ -40,7 +40,7 @@ async def insert_usuario(usuario: UsuariosModel):
 @router.put("/update-usuarios/", tags=["usuarios"])
 async def update_usuario(updated_usuario: UsuariosModel):
     print(updated_usuario)
-    existing_usuario = db.query(Usuarios).filter(Usuarios.Usuarios_id == updated_usuario.Usuarios_id).first()
+    existing_usuario = db.query(Usuarios).filter(Usuarios.usuarios_id == updated_usuario.usuarios_id).first()
 
     if existing_usuario:
         # Update the attributes of the existing usuario

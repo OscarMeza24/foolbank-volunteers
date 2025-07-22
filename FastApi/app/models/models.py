@@ -1,21 +1,34 @@
 from typing import List
-
-from sqlalchemy import Column, Integer, String, Text, ForeignKey, UniqueConstraint
+from sqlalchemy import Column, Integer, String, Text, ForeignKey, Boolean
 from sqlalchemy.orm import relationship
 from sqlalchemy.util import u
 from app.database.database import Base
+from passlib.context import CryptContext
 
+# Configuración para el hashing de contraseñas
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 class Usuarios(Base):
     __tablename__ = "Usuarios"
 
     usuarios_id = Column(Integer, primary_key=True)
-    nombre = Column(String)
-    apellido = Column(String)
-    correo = Column(String)
-    telefono = Column(Integer)
-    tipo = Column(String)
+    nombre = Column(String(100), nullable=False)
+    apellido = Column(String(100), nullable=False)
+    correo = Column(String(100), unique=True, nullable=False, index=True)
+    telefono = Column(String(20))
+    tipo = Column(String(50), nullable=False)  # Ejemplo: 'admin', 'voluntario', 'organizador'
+    hashed_password = Column(String(255), nullable=False)
+    is_active = Column(Boolean, default=True)
+    is_verified = Column(Boolean, default=False)
+    
+    # Relaciones
     voluntarios = relationship("Voluntarios", back_populates="usuario")
+
+    def set_password(self, password: str):
+        self.hashed_password = pwd_context.hash(password)
+
+    def verify_password(self, password: str) -> bool:
+        return pwd_context.verify(password, self.hashed_password)
 
 class Voluntarios(Base):
     __tablename__ = "Voluntarios"
