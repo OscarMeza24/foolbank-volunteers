@@ -5,11 +5,14 @@ from typing import Optional, List
 @dataclass
 class UsuariosModel:
     usuarios_id: int
-    nombre: Optional[str]
-    apellido: Optional[str]
-    correo: Optional[str]
-    telefono: Optional[int]
-    tipo: Optional[str]
+    nombre: str
+    apellido: str
+    correo: str
+    telefono: Optional[str] = None
+    tipo: str = "voluntario"
+    hashed_password: Optional[str] = None
+    is_active: bool = True
+    is_verified: bool = False
 
 
 @dataclass
@@ -47,6 +50,3 @@ class FeedbackModel:
     evento_id: Optional[int]
     calificacion: Optional[int]
     comentario: Optional[str]
-
-
-

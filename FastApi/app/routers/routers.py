@@ -1,9 +1,12 @@
 from typing import List
 from fastapi import HTTPException
+from sqlalchemy.orm import Session
 from app.models.models import Usuarios, Voluntarios, Eventos, Asignaciones, Feedback
 from app.models.schema import UsuariosModel, VoluntariosModel, EventosModel, AsignacionesModel, FeedbackModel
 from fastapi import APIRouter
-from app.database.database import SessionLocal
+from app.database.database import SessionLocal, get_db
+from fastapi import Depends
+from fastapi import status
 from fastapi.encoders import jsonable_encoder
 
 router = APIRouter()
@@ -19,22 +22,48 @@ async def get_usuarios() -> List[UsuariosModel]:
     return usuarios
 
 
-@router.post("/add-usuarios/", tags=["usuarios"])
-async def insert_usuario(usuario: UsuariosModel):
-    new_usuario = Usuarios(
-        usuarios_id=usuario.usuarios_id,
-        nombre=usuario.nombre,
-        apellido=usuario.apellido,
-        correo=usuario.correo,
-        telefono=usuario.telefono,
-        tipo=usuario.tipo
+@router.post("/add-usuarios/", response_model=UsuariosModel, status_code=status.HTTP_201_CREATED, tags=["usuarios"])
+async def insert_usuario(usuario: UsuariosModel, db: Session = Depends(get_db)):
+    # Verificar si el correo ya está registrado
+    db_usuario = db.query(Usuarios).filter(Usuarios.correo == usuario.correo).first()
+    if db_usuario:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="El correo electrónico ya está registrado"
+        )
+    
+    # Verificar si el ID ya existe
+    db_usuario = db.query(Usuarios).filter(Usuarios.usuarios_id == usuario.usuarios_id).first()
+    if db_usuario:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="El ID de usuario ya existe"
+        )
+    
+    try:
+        # Crear el nuevo usuario con valores por defecto para los campos requeridos
+        new_usuario = Usuarios(
+            usuarios_id=usuario.usuarios_id,
+            nombre=usuario.nombre,
+            apellido=usuario.apellido,
+            correo=usuario.correo,
+            telefono=usuario.telefono,
+            tipo=usuario.tipo,
+            hashed_password="default_password",  # Se debe implementar lógica de contraseña segura
+            is_active=True,
+            is_verified=False
+        )
 
-    )
-
-    db.add(new_usuario)
-    db.commit()
-    db.refresh(new_usuario)
-    return new_usuario
+        db.add(new_usuario)
+        db.commit()
+        db.refresh(new_usuario)
+        return new_usuario
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error al crear el usuario: {str(e)}"
+        )
 
 
 @router.put("/update-usuarios/", tags=["usuarios"])
@@ -305,4 +334,3 @@ async def delete_feedback(feedback_id: int):
         return True
 
     return False
-

@@ -23,7 +23,7 @@ router = APIRouter(
 @router.post("/register", response_model=UserInDB)
 async def register_user(user: UserCreate, db: Session = Depends(get_db)):
     # Verificar si el correo ya está registrado
-    db_user = db.query(Usuarios).filter(Usuarios.correo == user.email).first()
+    db_user = db.query(Usuarios).filter(Usuarios.correo == user.correo).first()
     if db_user:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -31,17 +31,16 @@ async def register_user(user: UserCreate, db: Session = Depends(get_db)):
         )
     
     # Crear nuevo usuario
-    hashed_password = get_password_hash(user.password)
     db_user = Usuarios(
         nombre=user.nombre,
         apellido=user.apellido,
-        correo=user.email,
+        correo=user.correo,
         telefono=user.telefono,
         tipo=user.tipo,
-        hashed_password=hashed_password,
         is_active=True,
         is_verified=False  # Podrías implementar verificación por correo electrónico
     )
+    db_user.set_password(user.password)
     
     db.add(db_user)
     db.commit()
@@ -54,7 +53,7 @@ async def login_for_access_token(
     db: Session = Depends(get_db)
 ):
     user = db.query(Usuarios).filter(Usuarios.correo == form_data.username).first()
-    if not user or not verify_password(form_data.password, user.hashed_password):
+    if not user or not user.verify_password(form_data.password):
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Correo o contraseña incorrectos",
