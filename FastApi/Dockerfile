@@ -22,34 +22,23 @@ RUN mkdir -p /app/logs && \
 # Cambiar al usuario no root
 USER appuser
 
-# Copiar archivos con permisos de solo lectura
-# Archivos individuales
+# Copiar archivos con los permisos correctos
+# Primero copiar solo los archivos necesarios
 COPY --chown=appuser:appgroup --chmod=444 \
-    ./main.py \
-    ./alembic.ini \
+    main.py \
+    alembic.ini \
     /app/
 
-# Copiar directorios con permisos mínimos
-RUN mkdir -p /app/app && \
-    mkdir -p /app/alembic && \
-    mkdir -p /app/database && \
-    mkdir -p /app/FastApi && \
-    mkdir -p /app/tests && \
-    chmod 555 /app/app /app/alembic /app/database /app/FastApi /app/tests
+# Copiar directorios con permisos de solo lectura
+COPY --chown=appuser:appgroup --chmod=555 \
+    app \
+    alembic \
+    database \
+    FastApi \
+    tests \
+    /app/
 
-# Copiar contenido de los directorios con permisos de solo lectura
-COPY --chown=appuser:appgroup --chmod=444 \
-    ./app/ /app/app/
-COPY --chown=appuser:appgroup --chmod=444 \
-    ./alembic/ /app/alembic/
-COPY --chown=appuser:appgroup --chmod=444 \
-    ./database/ /app/database/
-COPY --chown=appuser:appgroup --chmod=444 \
-    ./FastApi/ /app/FastApi/
-COPY --chown=appuser:appgroup --chmod=444 \
-    ./tests/ /app/tests/
-
-# Asegurar permisos de solo lectura en todos los archivos
+# Asegurar permisos de solo lectura
 RUN find /app -type f -exec chmod 444 {} \; && \
     find /app -type d -exec chmod 555 {} \;
 
