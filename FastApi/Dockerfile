@@ -24,28 +24,19 @@ RUN mkdir -p /app/logs && \
 USER appuser
 
 # Copiar archivos con permisos de solo lectura (444)
-COPY --chown=appuser:appgroup --from=0 \
+COPY --chown=root:root --chmod=444 --from=stage \
     main.py \
     alembic.ini \
     /app/
 
 # Copiar directorios con permisos de solo lectura (555)
-COPY --chown=appuser:appgroup --from=0 \
+COPY --chown=root:root --chmod=555 --from=stage \
     app \
     alembic \
     database \
     FastApi \
     tests \
     /app/
-
-# Asegurar permisos de solo lectura
-RUN find /app -type f -exec chmod 444 {} \; && \
-    find /app -type d -exec chmod 555 {} \; && \
-    chmod 755 /app/logs
-
-# Crear directorios que necesiten permisos de escritura
-RUN mkdir -p /app/logs && \
-    chmod 755 /app/logs
 
 # Comando para ejecutar la aplicación
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
