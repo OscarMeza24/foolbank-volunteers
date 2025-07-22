@@ -29,18 +29,29 @@ COPY --chown=appuser:appgroup --chmod=444 \
     ./alembic.ini \
     /app/
 
-# Directorios (solo lectura para archivos, ejecución para directorios)
-COPY --chown=appuser:appgroup --chmod=755 \
-    ./app \
-    ./alembic \
-    ./database \
-    ./FastApi \
-    ./tests \
-    /app/
+# Copiar directorios con permisos mínimos
+RUN mkdir -p /app/app && \
+    mkdir -p /app/alembic && \
+    mkdir -p /app/database && \
+    mkdir -p /app/FastApi && \
+    mkdir -p /app/tests && \
+    chmod 555 /app/app /app/alembic /app/database /app/FastApi /app/tests
 
-# Asegurar que los archivos dentro de los directorios sean de solo lectura
+# Copiar contenido de los directorios con permisos de solo lectura
+COPY --chown=appuser:appgroup --chmod=444 \
+    ./app/ /app/app/
+COPY --chown=appuser:appgroup --chmod=444 \
+    ./alembic/ /app/alembic/
+COPY --chown=appuser:appgroup --chmod=444 \
+    ./database/ /app/database/
+COPY --chown=appuser:appgroup --chmod=444 \
+    ./FastApi/ /app/FastApi/
+COPY --chown=appuser:appgroup --chmod=444 \
+    ./tests/ /app/tests/
+
+# Asegurar permisos de solo lectura en todos los archivos
 RUN find /app -type f -exec chmod 444 {} \; && \
-    find /app -type d -exec chmod 755 {} \;
+    find /app -type d -exec chmod 555 {} \;
 
 # Crear directorios que necesiten permisos de escritura
 RUN mkdir -p /app/logs && \
