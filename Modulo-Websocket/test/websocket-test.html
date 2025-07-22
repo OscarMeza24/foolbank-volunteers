@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prueba de WebSocket</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        #messages {
+            height: 300px;
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-bottom: 10px;
+            overflow-y: auto;
+        }
+        .message {
+            margin: 5px 0;
+            padding: 5px;
+            border-bottom: 1px solid #eee;
+        }
+        .received { color: blue; }
+        .sent { color: green; }
+        .system { color: gray; }
+        .error { color: red; }
+        .controls {
+            margin-top: 20px;
+        }
+        button {
+            padding: 8px 15px;
+            margin-right: 10px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>Prueba de WebSocket</h1>
+    
+    <div class="controls">
+        <button id="connectBtn">Conectar</button>
+        <button id="disconnectBtn" disabled>Desconectar</button>
+        <button id="joinRoomBtn" disabled>Unirse a Sala</button>
+        <button id="sendMessageBtn" disabled>Enviar Mensaje</button>
+    </div>
+    
+    <div class="controls">
+        <input type="text" id="roomInput" placeholder="Nombre de la sala" value="test_room">
+        <input type="text" id="messageInput" placeholder="Mensaje a enviar" value="¡Hola desde el cliente!">
+    </div>
+    
+    <h3>Mensajes:</h3>
+    <div id="messages"></div>
+
+    <script>
+        const messagesDiv = document.getElementById('messages');
+        const connectBtn = document.getElementById('connectBtn');
+        const disconnectBtn = document.getElementById('disconnectBtn');
+        const joinRoomBtn = document.getElementById('joinRoomBtn');
+        const sendMessageBtn = document.getElementById('sendMessageBtn');
+        const roomInput = document.getElementById('roomInput');
+        const messageInput = document.getElementById('messageInput');
+        
+        let socket = null;
+        let currentRoom = null;
+        
+        function addMessage(message, type = 'system') {
+            const messageElement = document.createElement('div');
+            messageElement.className = `message ${type}`;
+            messageElement.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            messagesDiv.appendChild(messageElement);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+        
+        function updateUI(connected = false) {
+            connectBtn.disabled = connected;
+            disconnectBtn.disabled = !connected;
+            joinRoomBtn.disabled = !connected;
+            sendMessageBtn.disabled = !connected || !currentRoom;
+        }
+        
+        // Conectar al WebSocket
+        connectBtn.addEventListener('click', () => {
+            const wsUrl = 'ws://localhost:3000/ws';
+            try {
+                socket = new WebSocket(wsUrl);
+                
+                socket.onopen = function() {
+                    addMessage('Conectado al servidor WebSocket', 'system');
+                    updateUI(true);
+                    
+                    // Escuchar mensajes entrantes
+                    socket.onmessage = (event) => {
+                        try {
+                            const data = JSON.parse(event.data);
+                            addMessage(`Mensaje recibido (${data.event || 'sin evento'}): ${JSON.stringify(data.data || event.data)}`, 'received');
+                        } catch (e) {
+                            addMessage(`Mensaje recibido: ${event.data}`, 'received');
+                        }
+                    };
+                    
+                    // Manejar errores
+                    socket.onerror = function(event) {
+                        console.error('Error en la conexión WebSocket:', event);
+                        addMessage('Error en la conexión WebSocket. Ver la consola para más detalles.', 'error');
+                    };
+                    
+                    // Manejar cierre de conexión
+                    socket.onclose = function(event) {
+                        console.log('Conexión WebSocket cerrada:', event);
+                        addMessage('Conexión cerrada. Código: ' + event.code + ', Razón: ' + event.reason, 'system');
+                        updateUI(false);
+                        currentRoom = null;
+                    };
+                };
+                
+            } catch (error) {
+                console.error('Error al crear la conexión WebSocket:', error);
+                addMessage('Error al crear la conexión WebSocket: ' + error.message, 'error');
+            }
+        });
+        
+        // Desconectar
+        disconnectBtn.addEventListener('click', () => {
+            if (socket) {
+                socket.close();
+                socket = null;
+                currentRoom = null;
+                updateUI(false);
+            }
+        });
+        
+        // Unirse a una sala
+        joinRoomBtn.addEventListener('click', () => {
+            if (!socket || socket.readyState !== WebSocket.OPEN) {
+                addMessage('No hay conexión activa', 'error');
+                return;
+            }
+            
+            const room = roomInput.value.trim();
+            if (!room) {
+                addMessage('Por favor ingresa un nombre de sala', 'error');
+                return;
+            }
+            
+            // Si ya está en una sala, salir primero
+            if (currentRoom) {
+                socket.send(JSON.stringify({
+                    event: 'leave_room',
+                    data: { room: currentRoom }
+                }));
+            }
+            
+            // Unirse a la nueva sala
+            socket.send(JSON.stringify({
+                event: 'join_room',
+                data: { room }
+            }));
+            
+            currentRoom = room;
+            updateUI(true);
+            addMessage(`Unido a la sala: ${room}`, 'system');
+        });
+        
+        // Enviar mensaje
+        sendMessageBtn.addEventListener('click', () => {
+            if (!socket || socket.readyState !== WebSocket.OPEN) {
+                addMessage('No hay conexión activa', 'error');
+                return;
+            }
+            
+            if (!currentRoom) {
+                addMessage('No estás en ninguna sala', 'error');
+                return;
+            }
+            
+            const message = messageInput.value.trim();
+            if (!message) {
+                addMessage('Por favor ingresa un mensaje', 'error');
+                return;
+            }
+            
+            const messageData = {
+                event: 'message',
+                data: {
+                    text: message,
+                    timestamp: new Date().toISOString()
+                }
+            };
+            
+            socket.send(JSON.stringify(messageData));
+            addMessage(`Tú: ${message}`, 'sent');
+            messageInput.value = '';
+        });
+        
+        // Enviar mensaje al presionar Enter
+        messageInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                sendMessageBtn.click();
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,54 +1,100 @@
-# Proyecto de FastAPI, SQLAlchemy y GraphQL
+# FoolBank - Sistema de Gestión de Voluntarios
 
-Este proyecto demuestra la integración entre FastAPI, SQLAlchemy y Strawberry GraphQL, utilizando una base de datos SQLite3. El objetivo es mostrar la sinergia y capacidades de estas tecnologías cuando se combinan.
+Este proyecto es un sistema integral para la gestión de voluntarios, eventos y donaciones para FoolBank. Combina una API REST con GraphQL y WebSockets en tiempo real para ofrecer una experiencia completa de gestión de voluntariado.
 
 ## Características Principales
 
-- **Integración FastAPI:** Utiliza FastAPI, un moderno framework web rápido para construir APIs con Python 3.7+.
+### Backend
+- **FastAPI:** Framework web moderno y rápido para construir APIs con Python 3.7+.
+- **SQLAlchemy:** ORM potente para la gestión de bases de datos relacionales.
+- **GraphQL con Strawberry:** Implementación de GraphQL con enfoque en código primero.
+- **WebSockets:** Soporte para comunicación en tiempo real entre clientes y servidor.
 
-- **Base de Datos SQLAlchemy:** Utiliza SQLAlchemy, una poderosa herramienta SQL y biblioteca de mapeo objeto-relacional.
+### Frontend
+- **Interfaz React (próximamente):** Panel de administración moderno y responsivo.
 
-- **GraphQL con Strawberry:** Implementa Strawberry, una biblioteca GraphQL para Python con enfoque en código primero.
+### Base de Datos
+- **SQLite3:** Base de datos ligera para desarrollo y pruebas.
+- **PostgreSQL (producción):** Base de datos robusta para entornos de producción.
 
-- **Base de Datos SQLite3:** Utiliza SQLite3 como base de datos backend para facilitar la configuración y portabilidad.
+## 🚀 Comenzando
 
-## Comenzando
-
-Sigue estos pasos para descargar, instalar los requisitos y comenzar el servidor FastAPI:
+Sigue estos pasos para configurar el entorno de desarrollo y ejecutar la aplicación:
 
 ### Requisitos Previos
 
-- Asegúrate de tener Python 3.7 o superior instalado.
+- Python 3.9 o superior
+- Node.js 16+ (para el módulo WebSocket)
+- npm o yarn
+- Git
 
-### Descarga e Instalación del Proyecto
+### Configuración del Entorno
 
 1. Clona el repositorio:
+   ```bash
+   git clone https://github.com/OscarMeza24/foolbank-volunteers.git
+   cd foolbank-volunteers
+   ```
 
-   ```git clone https://github.com/your-username/your-fastapi-project.git```
+2. Configura el entorno de Python:
+   ```bash
+   # Crea y activa el entorno virtual
+   python -m venv venv
+   # En Windows
+   .\venv\Scripts\activate
+   # En Unix/macOS
+   source venv/bin/activate
 
-2. Cambia al directorio del proyecto:
+   # Instala dependencias de Python
+   pip install -r FastApi/requirements.txt
+   ```
 
-   ```cd foodbank-Voluntatios-Proyecto```
+3. Configura el módulo WebSocket:
+   ```bash
+   cd Modulo-Websocket
+   npm install
+   ```
 
-3. Crea y activa un entorno virtual:
+### Ejecución
 
-   ```python -m venv venv```
-   
-   ```source venv/bin/activate```
-   #### En Windows, usa
-   ```venv\Scripts\activate```
+1. Inicia el servidor FastAPI:
+   ```bash
+   cd FastApi
+   uvicorn main:app --reload
+   ```
 
-4. Instala las dependencias:
+2. En otra terminal, inicia el servidor WebSocket:
+   ```bash
+   cd Modulo-Websocket
+   npm run start:dev
+   ```
 
-   ```pip install -r requirements.txt```
+## 📚 Documentación de la API
 
-### Iniciar el Servidor FastAPI
+- **API REST:** http://localhost:8000/docs
+- **GraphQL Playground:** http://localhost:8000/graphql
+- **WebSocket:** ws://localhost:3000 (desde el módulo WebSocket)
 
-Inicia el servidor FastAPI con el siguiente comando:
+## 🛠️ Estructura del Proyecto
 
-   ```uvicorn main:app --reload```
-
-Visita http://127.0.0.1:8000/docs en tu navegador para acceder a la documentación de Swagger y explorar los endpoints de la API disponibles.
+```
+foolbank-volunteers/
+├── FastApi/                 # Backend principal con FastAPI
+│   ├── app/
+│   │   ├── api/            # Endpoints de la API
+│   │   ├── core/            # Configuraciones principales
+│   │   ├── db/              # Configuración de base de datos
+│   │   ├── models/          # Modelos SQLAlchemy
+│   │   ├── schemas/         # Esquemas Pydantic
+│   │   └── websocket/       # Configuración de WebSockets
+│   └── main.py              # Punto de entrada de la aplicación
+│
+└── Modulo-Websocket/        # Servidor WebSocket
+    ├── src/
+    │   ├── events/          # Controladores de eventos
+    │   └── main.ts          # Punto de entrada
+    └── test/                # Pruebas
+```
 
 ## API GraphQL
 
@@ -228,38 +274,3 @@ query GetEventosConVoluntarios {
   }
 }
 ```
-
-Result:
-
-```
-{
-  "data": {
-    "updateHeader": {
-      "name": "Mutation Update",
-      "salesRepId": 105,
-      "buyerId": 1002,
-      "active": "N"
-    }
-  }
-}
-```
-
-
-### Insert:
-
-```
-mutation MyMutation {
-  createHeader(
-    header: {headerId: 7, name: "TEST", buyerId: 1002, active: "Y", salesRepId: 105}
-  ) {
-    name
-    salesRepId
-    buyerId
-    active
-  }
-}
-```
-
-
-
-![image](https://github.com/tyanakiev/graphql-fastapi/assets/5628399/d091ba9b-24d4-44d8-9eaf-c29edbd46a81)
