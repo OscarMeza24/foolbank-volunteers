@@ -23,12 +23,7 @@ interface BroadcastMessageData extends BaseMessageData {
   message: string;
 }
 
-type WebSocketEvent =
-  | 'broadcast'
-  | 'private'
-  | 'message'
-  | 'notification'
-  | string;
+type WebSocketEvent = string;
 
 interface MessagePayload<T = BaseMessageData> {
   event: WebSocketEvent;

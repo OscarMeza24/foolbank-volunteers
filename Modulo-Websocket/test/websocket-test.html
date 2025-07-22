@@ -98,6 +98,7 @@
                             const data = JSON.parse(event.data);
                             addMessage(`Mensaje recibido (${data.event || 'sin evento'}): ${JSON.stringify(data.data || event.data)}`, 'received');
                         } catch (e) {
+                            console.error('Error al procesar el mensaje:', e);
                             addMessage(`Mensaje recibido: ${event.data}`, 'received');
                         }
                     };
