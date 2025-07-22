@@ -52,7 +52,7 @@ async def handle_connection_success(data: Dict[str, Any]):
     else:
         logger.warning("No se pudo unir a la sala 'default_room'")
 
-async def handle_websocket_message(data: Dict[str, Any]):
+def handle_websocket_message(data: Dict[str, Any]):
     """Maneja los mensajes recibidos del WebSocket."""
     logger.info(f"Mensaje recibido: {data}")
 

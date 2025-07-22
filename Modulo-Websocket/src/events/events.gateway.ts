@@ -50,8 +50,8 @@ export class EventsGateway
   implements OnGatewayInit, OnGatewayConnection, OnGatewayDisconnect
 {
   @WebSocketServer() server: Server;
-  private logger: Logger = new Logger('EventsGateway');
-  private clients: Map<string, Socket> = new Map();
+  private readonly logger: Logger = new Logger('EventsGateway');
+  private readonly clients: Map<string, Socket> = new Map();
 
   afterInit(server: Server) {
     this.server = server;
