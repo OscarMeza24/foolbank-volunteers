@@ -22,21 +22,25 @@ RUN mkdir -p /app/logs && \
 # Cambiar al usuario no root
 USER appuser
 
-# Copiar solo los archivos necesarios de la aplicación con permisos de solo lectura
+# Copiar archivos con permisos de solo lectura
 # Archivos individuales
-COPY --chown=appuser:appgroup --chmod=555 \
+COPY --chown=appuser:appgroup --chmod=444 \
     ./main.py \
     ./alembic.ini \
     /app/
 
-# Directorios
-COPY --chown=appuser:appgroup --chmod=555 \
+# Directorios (solo lectura para archivos, ejecución para directorios)
+COPY --chown=appuser:appgroup --chmod=755 \
     ./app \
     ./alembic \
     ./database \
     ./FastApi \
     ./tests \
     /app/
+
+# Asegurar que los archivos dentro de los directorios sean de solo lectura
+RUN find /app -type f -exec chmod 444 {} \; && \
+    find /app -type d -exec chmod 755 {} \;
 
 # Crear directorios que necesiten permisos de escritura
 RUN mkdir -p /app/logs && \
