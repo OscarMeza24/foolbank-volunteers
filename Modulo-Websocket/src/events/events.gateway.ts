@@ -23,16 +23,14 @@ interface BroadcastMessageData extends BaseMessageData {
   message: string;
 }
 
-type WebSocketEvent = string;
-
 interface MessagePayload<T = BaseMessageData> {
-  event: WebSocketEvent;
+  event: string;
   data: T;
 }
 
 interface SocketResponse<T = unknown> {
   status: 'received' | 'success' | 'error';
-  event: WebSocketEvent;
+  event: string;
   data: T;
   timestamp: string;
 }
@@ -130,7 +128,7 @@ export class EventsGateway
 
   // Método para enviar notificaciones a todos los clientes
   broadcastNotification(
-    event: WebSocketEvent,
+    event: string,
     message: string,
     data: Record<string, unknown> = {},
   ) {
