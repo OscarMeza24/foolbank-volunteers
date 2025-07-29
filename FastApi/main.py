@@ -4,6 +4,7 @@ from datetime import datetime
 from app.websocket.client import websocket_client
 import asyncio
 import logging
+import uvicorn
 from typing import Dict, Any
 from app.database.database import engine, Base, get_db
 from app.graphql.schema import graphql_app
@@ -13,6 +14,14 @@ from app.auth.routes import router as auth_router
 # Configurar logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+async def connect_websocket():
+    """Inicia la conexión WebSocket."""
+    try:
+        await websocket_client.connect()
+        logger.info("Conectado al servidor WebSocket")
+    except Exception as e:
+        logger.error(f"Error al conectar al WebSocket: {e}")
 
 app = FastAPI(title="FoolBank Volunteers API",
               description="API para la gestión de voluntarios de FoolBank",
@@ -28,18 +37,33 @@ app.add_middleware(
 )
 
 # Incluir routers existentes
+app.include_router(auth_router, prefix="/auth", tags=["auth"])
+app.include_router(routers.router, prefix="/api", tags=["api"])
 app.include_router(graphql_app, prefix="/graphql")
-app.include_router(routers.router)
-app.include_router(auth_router, prefix="/api/v1")
+
+async def notificacion_handler(data):
+    print("Notificación recibida:", data)
 
 @app.on_event("startup")
-async def startup():
+async def startup_event():
+    """Evento que se ejecuta al iniciar la aplicación."""
+    logger.info("Iniciando aplicación...")
     # Inicializar la base de datos
     Base.metadata.create_all(bind=engine)
-    
     # Configurar manejadores de eventos WebSocket
     websocket_client.on("connection_success", handle_connection_success)
     websocket_client.on("message", handle_websocket_message)
+
+    websocket_client.on('notificacion', notificacion_handler)
+    await websocket_client.connect()
+
+
+    # Suscribirse al evento 'nueva-organizacion'
+    async def handle_nueva_organizacion(data):
+        logger.info(f"Evento 'nueva-organizacion' recibido: {data}")
+        # Aquí puedes agregar la lógica para manejar el evento
+    
+    websocket_client.on("nueva-organizacion", handle_nueva_organizacion)
     
     # Iniciar la conexión WebSocket en segundo plano
     task = asyncio.create_task(connect_websocket())

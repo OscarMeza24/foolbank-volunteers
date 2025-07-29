@@ -10,15 +10,17 @@ from fastapi import status
 from fastapi.encoders import jsonable_encoder
 
 router = APIRouter()
-db = SessionLocal()
+
 
 @router.get("/", tags=["root"])
 async def root():
     return {"message": "Bienvenido a la API de FoodBank"}
 
 @router.get("/usuarios", response_model=None, tags=["usuarios"])
-async def get_usuarios() -> List[UsuariosModel]:
+async def get_usuarios(db: Session = Depends(get_db)) -> List[UsuariosModel]:
+    db = SessionLocal()
     usuarios = db.query(Usuarios).all()
+    db.close()
     return usuarios
 
 
@@ -67,7 +69,7 @@ async def insert_usuario(usuario: UsuariosModel, db: Session = Depends(get_db)):
 
 
 @router.put("/update-usuarios/", tags=["usuarios"])
-async def update_usuario(updated_usuario: UsuariosModel):
+async def update_usuario(updated_usuario: UsuariosModel, db: Session = Depends(get_db)):
     print(updated_usuario)
     existing_usuario = db.query(Usuarios).filter(Usuarios.usuarios_id == updated_usuario.usuarios_id).first()
 
@@ -86,7 +88,7 @@ async def update_usuario(updated_usuario: UsuariosModel):
 
 
 @router.delete("/delete-usuarios/{usuarios_id}", tags=["usuarios"])
-async def delete_usuario(usuarios_id: int):
+async def delete_usuario(usuarios_id: int, db: Session = Depends(get_db)):
     existing_usuario = db.query(Usuarios).filter(Usuarios.usuarios_id == usuarios_id).first()
 
     if existing_usuario:
@@ -104,9 +106,12 @@ async def get_voluntarios()->List[VoluntariosModel]:
 
 
 @router.get("/eventos", response_model=None, tags=["eventos"])
-async def get_eventos() ->List[EventosModel]:
+async def get_eventos(db: Session = Depends(get_db)) ->List[EventosModel]:
+    db = SessionLocal()
     eventos = db.query(Eventos).all()
+    db.close()
     return eventos
+
 
 
 @router.get("/asignaciones", response_model=None, tags=["asignaciones"])
@@ -121,8 +126,14 @@ async def get_feedback() ->List[FeedbackModel]:
     return feedback
 
 
+@router.get("/asignaciones", response_model=None, tags=["asignaciones"])
+async def get_asignaciones() -> List[AsignacionesModel]:
+    asignaciones = db.query(Asignaciones).all()
+    return asignaciones
+
+
 @router.post("/add-voluntarios/", tags=["voluntarios"])
-async def insert_voluntario(voluntario: VoluntariosModel):
+async def insert_voluntario(voluntario: VoluntariosModel, db: Session = Depends(get_db)):
     new_voluntario = Voluntarios(
         voluntarios_id=voluntario.voluntarios_id,
         habilidades=voluntario.habilidades,
@@ -137,7 +148,7 @@ async def insert_voluntario(voluntario: VoluntariosModel):
 
 
 @router.put("/update-voluntario/", tags=["voluntarios"])
-async def update_voluntario(updated_voluntario: VoluntariosModel):
+async def update_voluntario(updated_voluntario: VoluntariosModel, db: Session = Depends(get_db)):
     existing_voluntario = db.query(Voluntarios).filter(Voluntarios.voluntarios_id == updated_voluntario.voluntarios_id).first()
 
     if existing_voluntario:
@@ -155,7 +166,7 @@ async def update_voluntario(updated_voluntario: VoluntariosModel):
 
 
 @router.delete("/delete-voluntario/{voluntario_id}", tags=["voluntarios"])
-async def delete_voluntario(voluntario_id: int):
+async def delete_voluntario(voluntario_id: int, db: Session = Depends(get_db)):
     existing_voluntario = db.query(Voluntarios).filter(Voluntarios.voluntarios_id == voluntario_id).first()
 
     if existing_voluntario:
@@ -167,7 +178,7 @@ async def delete_voluntario(voluntario_id: int):
 
 
 @router.get("/eventos", response_model=None, tags=["eventos"])
-async def get_eventos()->List[EventosModel]:
+async def get_eventos(db: Session = Depends(get_db))->List[EventosModel]:
     eventos = db.query(Eventos).all()
     return eventos
 
@@ -191,7 +202,7 @@ async def get_asignaciones() -> List[AsignacionesModel]:
 
 
 @router.post("/add-asignacion/", tags=["asignaciones"])
-async def insert_asignacion(asignacion: AsignacionesModel):
+async def insert_asignacion(asignacion: AsignacionesModel, db: Session = Depends(get_db)):
     new_asignacion = Asignaciones(
         asignaciones_id=asignacion.asignaciones_id,
         voluntario_id=asignacion.voluntario_id,
@@ -206,7 +217,7 @@ async def insert_asignacion(asignacion: AsignacionesModel):
 
 
 @router.post("/add-evento/", tags=["eventos"])
-async def insert_evento(evento: EventosModel):
+async def insert_evento(evento: EventosModel, db: Session = Depends(get_db)):
     new_evento = Eventos(
         eventos_id=evento.eventos_id,
         nombre=evento.nombre,
@@ -223,7 +234,7 @@ async def insert_evento(evento: EventosModel):
     return new_evento
 
 @router.post("/add-feedback/", tags=["feedback"])
-async def insert_feedback(feedback: FeedbackModel):
+async def insert_feedback(feedback: FeedbackModel, db: Session = Depends(get_db)):
     new_feedback = Feedback(
         feedback_id=feedback.feedback_id,
         voluntario_id=feedback.voluntario_id,
@@ -239,7 +250,7 @@ async def insert_feedback(feedback: FeedbackModel):
 
 
 @router.put("/update-asignacion/", tags=["asignaciones"])
-async def update_asignacion(updated_asignacion: AsignacionesModel):
+async def update_asignacion(updated_asignacion: AsignacionesModel, db: Session = Depends(get_db)):
     existing_asignacion = db.query(Asignaciones).filter(Asignaciones.asignaciones_id == updated_asignacion.asignaciones_id).first()
 
     if existing_asignacion:
@@ -255,7 +266,7 @@ async def update_asignacion(updated_asignacion: AsignacionesModel):
         raise HTTPException(status_code=404, detail="Asignacion no encontrada")
 
 @router.put("/update-evento/", tags=["eventos"])
-async def update_evento(updated_evento: EventosModel):
+async def update_evento(updated_evento: EventosModel, db: Session = Depends(get_db)):
     existing_evento = db.query(Eventos).filter(Eventos.eventos_id == updated_evento.eventos_id).first()
 
     if existing_evento:
@@ -271,7 +282,7 @@ async def update_evento(updated_evento: EventosModel):
         raise HTTPException(status_code=404, detail="Evento no encontrado")
 
 @router.put("/update-feedback/", tags=["feedback"])
-async def update_feedback(updated_feedback: FeedbackModel):
+async def update_feedback(updated_feedback: FeedbackModel, db: Session = Depends(get_db)):
     existing_feedback = db.query(Feedback).filter(Feedback.feedback_id == updated_feedback.feedback_id).first()
 
     if existing_feedback:
@@ -287,7 +298,7 @@ async def update_feedback(updated_feedback: FeedbackModel):
         raise HTTPException(status_code=404, detail="Feedback no encontrado")
 
 @router.put("/update-voluntario/", tags=["voluntarios"])
-async def update_voluntario(updated_voluntario: VoluntariosModel):
+async def update_voluntario(updated_voluntario: VoluntariosModel, db: Session = Depends(get_db)):
     existing_voluntario = db.query(Voluntarios).filter(Voluntarios.voluntarios_id == updated_voluntario.voluntarios_id).first()
 
     if existing_voluntario:
@@ -303,7 +314,7 @@ async def update_voluntario(updated_voluntario: VoluntariosModel):
         raise HTTPException(status_code=404, detail="Voluntario no encontrado")
 
 @router.delete("/delete-asignacion/{asignacion_id}", tags=["asignaciones"])
-async def delete_asignacion(asignacion_id: int):
+async def delete_asignacion(asignacion_id: int, db: Session = Depends(get_db)):
     existing_asignacion = db.query(Asignaciones).filter(Asignaciones.asignaciones_id == asignacion_id).first()
 
     if existing_asignacion:
@@ -314,7 +325,7 @@ async def delete_asignacion(asignacion_id: int):
     return False
 
 @router.delete("/delete-evento/{evento_id}", tags=["eventos"])
-async def delete_evento(evento_id: int):
+async def delete_evento(evento_id: int, db: Session = Depends(get_db)):
     existing_evento = db.query(Eventos).filter(Eventos.eventos_id == evento_id).first()
 
     if existing_evento:
@@ -325,7 +336,7 @@ async def delete_evento(evento_id: int):
     return False
 
 @router.delete("/delete-feedback/{feedback_id}", tags=["feedback"])
-async def delete_feedback(feedback_id: int):
+async def delete_feedback(feedback_id: int, db: Session = Depends(get_db)):
     existing_feedback = db.query(Feedback).filter(Feedback.feedback_id == feedback_id).first()
 
     if existing_feedback:

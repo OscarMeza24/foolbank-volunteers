@@ -15,7 +15,7 @@ export interface AppConfig {
 }
 
 export default (): AppConfig => ({
-  port: process.env.PORT ? parseInt(process.env.PORT, 10) : 3000,
+  port: process.env.PORT ? parseInt(process.env.PORT, 10) : 4005,
   host: process.env.HOST || '0.0.0.0',
   environment: process.env.NODE_ENV || 'development',
   websocket: {

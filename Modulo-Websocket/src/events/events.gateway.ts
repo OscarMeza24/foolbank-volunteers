@@ -26,6 +26,7 @@ interface BroadcastMessageData extends BaseMessageData {
 interface MessagePayload<T = BaseMessageData> {
   event: string;
   data: T;
+  room?: string;
 }
 
 interface SocketResponse<T = unknown> {
@@ -75,11 +76,65 @@ export class EventsGateway
   }
 
   @SubscribeMessage('message')
-  handleMessage(client: Socket, payload: MessagePayload): void {
-    const { event, data } = payload;
-    this.logger.log(
-      `Mensaje recibido de ${client.id}: ${JSON.stringify(payload)}`,
-    );
+  handleMessage(client: Socket, payload: any): void {
+    this.logger.log(`Mensaje recibido de ${client.id}: ${JSON.stringify(payload)}`);
+
+    // Manejar diferentes formatos de mensaje
+    let event: string;
+    let data: any;
+    let room: string | undefined;
+
+    // Formato 1: { event, data, room? }
+    if ('event' in payload && 'data' in payload) {
+        event = payload.event;
+        data = payload.data;
+        room = payload.room;
+    }
+    // Formato 2: { room, data: { event, data } }
+    else if ('room' in payload && 'data' in payload && payload.data && typeof payload.data === 'object' && 'event' in payload.data) {
+        room = payload.room;
+        event = payload.data.event;
+        data = payload.data.data || payload.data; // Asegurarse de manejar ambos formatos
+    } else {
+        // Formato no reconocido
+        this.logger.error(`Formato de mensaje no reconocido: ${JSON.stringify(payload)}`);
+        return;
+    }
+
+    // Unir a la sala si el evento es 'join'
+    if (event === 'join' && data && data.room) {
+      client.join(data.room);
+      this.logger.log(`Cliente ${client.id} unido a la sala ${data.room}`);
+      return;
+    }
+
+    // Manejar notificaciones
+    if (event === 'notificacion') {
+      // Si el mensaje incluye una sala, lo enviamos solo a esa sala
+      if (room) {
+        this.server.to(room).emit('notificacion', data);
+      } else {
+        // Si no hay sala, emitimos a todos
+        this.server.emit('notificacion', data);
+      }
+    }
+
+    // Si el evento es de inventario o solicitud, reenviarlo como 'notificacion'
+    if (['nuevo-inventario', 'nueva-solicitude', 'organizacion-actualizada', 'organizacion-eliminada', 'inventario-actualizado','inventario-eliminado', 'solicitud-actualizada', 'solicitud-eliminada',
+      'nuevo-donante', 'donante-eliminado', 'nuevo-receptor', 'receptor-eliminado'
+    ].includes(event)) {
+      const notificacion = {
+        event,
+        data,
+        timestamp: new Date().toISOString()
+      };
+      if (room) {
+        this.server.to(room).emit('notificacion', notificacion);
+      } else {
+        this.server.emit('notificacion', notificacion);
+      }
+      return;
+    }
 
     // Manejar diferentes tipos de mensajes
     switch (event) {
@@ -115,6 +170,15 @@ export class EventsGateway
         }
         break;
       }
+      case 'nueva-organizacion': {
+        this.server.emit('nueva-organizacion', {
+          status: 'success',
+          event: 'nueva-organizacion',
+          data,
+          timestamp: new Date().toISOString(),
+        });
+        break;
+      }     
       default:
         // Respuesta por defecto
         client.emit('message', {
@@ -125,6 +189,7 @@ export class EventsGateway
         } as SocketResponse);
     }
   }
+  
 
   // Método para enviar notificaciones a todos los clientes
   broadcastNotification(
