@@ -33,14 +33,27 @@ class WebSocketClient:
             logger.debug(f"Mensaje recibido: {data}")
             await self._handle_message(data)
 
-    async def connect(self):
-        """Establece la conexión con el servidor Socket.IO."""
+    async def connect(self, required: bool = False):
+        """
+        Establece la conexión con el servidor Socket.IO.
+        
+        Args:
+            required: Si es True, lanza una excepción si no se puede conectar.
+                     Si es False, solo registra un mensaje de advertencia.
+        """
         if self.connected:
             logger.info("Ya hay una conexión activa")
-            return self
+            return True
             
-        await self._attempt_connection()
-        return self
+        try:
+            await self._attempt_connection()
+            return True
+        except Exception as e:
+            if required:
+                raise
+            logger.warning(f"No se pudo conectar al WebSocket: {str(e)}")
+            logger.warning("La aplicación continuará sin conexión WebSocket")
+            return False
         
     async def _attempt_connection(self):
         """Intenta establecer la conexión con el servidor Socket.IO."""

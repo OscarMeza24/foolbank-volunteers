@@ -39,6 +39,7 @@ class Voluntarios(Base):
     usuario = relationship("Usuarios", back_populates="voluntarios")
     asignaciones = relationship("Asignaciones", back_populates="voluntario")
     feedback = relationship("Feedback", back_populates="voluntario")
+    analisis = relationship("VolunteerAnalysis", back_populates="voluntario", cascade="all, delete-orphan")
 
 class Eventos(Base):
     __tablename__ = "Eventos"

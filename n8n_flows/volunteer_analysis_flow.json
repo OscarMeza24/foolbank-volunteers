@@ -1,0 +1,265 @@
+{
+  "name": "Análisis de Voluntario",
+  "nodes": [
+    {
+      "parameters": {},
+      "name": "Start",
+      "type": "n8n-nodes-base.start",
+      "typeVersion": 1,
+      "position": [250, 300]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "analyze-volunteer",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1,
+      "position": [450, 300],
+      "webhookId": "volunteer-analysis-webhook"
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "resource": "analysis",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "voluntario_id",
+              "value": "={{$node[\"Webhook\"].json.body.voluntario_id}}"
+            },
+            {
+              "name": "estado",
+              "value": "pending"
+            },
+            {
+              "name": "parametros",
+              "value": "={{$node[\"Webhook\"].json.body.parametros}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Crear Análisis en DB",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [700, 300],
+      "credentials": {
+        "httpBasicAuth": {
+          "user": "admin",
+          "password": "password"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "resource": "voluntario",
+        "id": "={{$node[\"Webhook\"].json.body.voluntario_id}}",
+        "options": {}
+      },
+      "name": "Obtener Datos Voluntario",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [950, 200],
+      "credentials": {
+        "httpBasicAuth": {
+          "user": "admin",
+          "password": "password"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "resource": "eventos-voluntario",
+        "id": "={{$node[\"Webhook\"].json.body.voluntario_id}}",
+        "options": {}
+      },
+      "name": "Obtener Eventos Voluntario",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [950, 400],
+      "credentials": {
+        "httpBasicAuth": {
+          "user": "admin",
+          "password": "password"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "authentication": "apiKey",
+        "resource": "chat",
+        "model": "gpt-4",
+        "prompt": "Analiza el perfil del voluntario y su historial de eventos para generar un informe detallado.\n\nDatos del voluntario: {{$node[\"Obtener Datos Voluntario\"].json}}\n\nHistorial de eventos: {{$node[\"Obtener Eventos Voluntario\"].json}}\n\nGenera un informe que incluya:\n1. Resumen de habilidades y experiencia\n2. Fortalezas identificadas\n3. Áreas de mejora\n4. Recomendaciones para futuros eventos\n5. Compatibilidad con diferentes tipos de eventos",
+        "options": {}
+      },
+      "name": "Generar Análisis con IA",
+      "type": "n8n-nodes-base.openAi",
+      "typeVersion": 1,
+      "position": [1250, 300],
+      "credentials": {
+        "openAiApi": {
+          "apiKey": "tu-api-key-aqui"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "resource": "analysis",
+        "id": "={{$node[\"Crear Análisis en DB\"].json.id}}",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "estado",
+              "value": "completed"
+            },
+            {
+              "name": "resultado",
+              "value": "={{$node[\"Generar Análisis con IA\"].json}}"
+            },
+            {
+              "name": "fecha_actualizacion",
+              "value": "={{$node[\"\"].json.timestamp}}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "name": "Actualizar Análisis en DB",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 1,
+      "position": [1550, 300],
+      "credentials": {
+        "httpBasicAuth": {
+          "user": "admin",
+          "password": "password"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "functionCode": "// Enviar notificación al usuario\nreturn {\n  json: {\n    status: 'success',\n    message: 'Análisis completado exitosamente',\n    analysis_id: $node[\"Crear Análisis en DB\"].json.id\n  }\n};"
+      },
+      "name": "Enviar Notificación",
+      "type": "n8n-nodes-base.function",
+      "typeVersion": 1,
+      "position": [1800, 300]
+    },
+    {
+      "parameters": {
+        "statusCode": 200
+      },
+      "name": "Responder al Cliente",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [2050, 300]
+    }
+  ],
+  "connections": {
+    "Start": {
+      "main": [
+        [
+          {
+            "node": "Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Crear Análisis en DB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Crear Análisis en DB": {
+      "main": [
+        [
+          {
+            "node": "Obtener Datos Voluntario",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Obtener Eventos Voluntario",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Obtener Datos Voluntario": {
+      "main": [
+        [
+          {
+            "node": "Generar Análisis con IA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Obtener Eventos Voluntario": {
+      "main": [
+        [
+          {
+            "node": "Generar Análisis con IA",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Generar Análisis con IA": {
+      "main": [
+        [
+          {
+            "node": "Actualizar Análisis en DB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Actualizar Análisis en DB": {
+      "main": [
+        [
+          {
+            "node": "Enviar Notificación",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Enviar Notificación": {
+      "main": [
+        [
+          {
+            "node": "Responder al Cliente",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {},
+  "tag": null,
+  "pinData": {}
+}

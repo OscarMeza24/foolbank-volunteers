@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException, status
+from fastapi import FastAPI, Depends, HTTPException, status, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime
 from app.websocket.client import websocket_client
@@ -6,10 +6,13 @@ import asyncio
 import logging
 import uvicorn
 from typing import Dict, Any
-from app.database.database import engine, Base, get_db
+from app.db import engine, Base, get_db, SessionLocal
 from app.graphql.schema import graphql_app
 from app.routers import routers
 from app.auth.routes import router as auth_router
+from app.models.agent_models import add_relationship_to_volunteers, AnalysisStatus, VolunteerAnalysis
+from app.api.endpoints.agent import router as agent_router
+from app.agent_flow.n8n_integration import n8n, startup_n8n_client, shutdown_n8n_client
 
 # Configurar logging
 logging.basicConfig(level=logging.INFO)
@@ -24,8 +27,8 @@ async def connect_websocket():
         logger.error(f"Error al conectar al WebSocket: {e}")
 
 app = FastAPI(title="FoolBank Volunteers API",
-              description="API para la gestión de voluntarios de FoolBank",
-              version="1.0.0")
+                description="API para la gestión de voluntarios de FoolBank",
+                version="1.0.0")
 
 # Configuración de CORS
 app.add_middleware(
@@ -40,6 +43,7 @@ app.add_middleware(
 app.include_router(auth_router, prefix="/auth", tags=["auth"])
 app.include_router(routers.router, prefix="/api", tags=["api"])
 app.include_router(graphql_app, prefix="/graphql")
+app.include_router(agent_router, prefix="/api/v1/agent", tags=["agent"])
 
 async def notificacion_handler(data):
     print("Notificación recibida:", data)
@@ -48,26 +52,42 @@ async def notificacion_handler(data):
 async def startup_event():
     """Evento que se ejecuta al iniciar la aplicación."""
     logger.info("Iniciando aplicación...")
+    
     # Inicializar la base de datos
     Base.metadata.create_all(bind=engine)
+    
+    # Añadir relaciones al modelo Voluntarios
+    add_relationship_to_volunteers()
+    
     # Configurar manejadores de eventos WebSocket
     websocket_client.on("connection_success", handle_connection_success)
     websocket_client.on("message", handle_websocket_message)
-
     websocket_client.on('notificacion', notificacion_handler)
-    await websocket_client.connect()
-
-
-    # Suscribirse al evento 'nueva-organizacion'
-    async def handle_nueva_organizacion(data):
-        logger.info(f"Evento 'nueva-organizacion' recibido: {data}")
-        # Aquí puedes agregar la lógica para manejar el evento
     
-    websocket_client.on("nueva-organizacion", handle_nueva_organizacion)
+    # Iniciar cliente n8n
+    await startup_n8n_client()
     
-    # Iniciar la conexión WebSocket en segundo plano
-    task = asyncio.create_task(connect_websocket())
-    return task
+    # Intentar conectar al WebSocket (no es crítico si falla)
+    try:
+        connected = await websocket_client.connect(required=False)
+        if connected:
+            logger.info("Conexión WebSocket establecida exitosamente")
+        
+        # Suscribirse al evento 'nueva-organizacion'
+        async def handle_nueva_organizacion(data):
+            logger.info(f"Evento 'nueva-organizacion' recibido: {data}")
+            # Aquí puedes agregar la lógica para manejar el evento
+        
+        websocket_client.on("nueva-organizacion", handle_nueva_organizacion)
+        
+        # Iniciar la conexión WebSocket en segundo plano
+        task = asyncio.create_task(connect_websocket())
+        return task
+        
+    except Exception as e:
+        logger.warning(f"No se pudo conectar al WebSocket: {e}")
+        logger.warning("La aplicación continuará sin funcionalidad de WebSocket")
+        return None
 
 async def handle_connection_success(data: Dict[str, Any]):
     """Maneja el evento de conexión exitosa."""
@@ -88,22 +108,53 @@ async def connect_websocket():
     while True:
         try:
             if not websocket_client.connected:
-                await websocket_client.connect()
-                logger.info("Cliente WebSocket conectado exitosamente")
+                connected = await websocket_client.connect(required=False)
+                if connected:
+                    logger.info("Cliente WebSocket conectado exitosamente")
+                else:
+                    logger.warning("No se pudo conectar al WebSocket, reintentando en 30 segundos...")
+                    await asyncio.sleep(30)  # Esperar más tiempo antes de reintentar
+                    continue
             
             # Esperar un tiempo antes de verificar la conexión nuevamente
-            await asyncio.sleep(10)
+            await asyncio.sleep(10)  # Verificar cada 10 segundos
             
+        except asyncio.CancelledError:
+            logger.info("Tarea de conexión WebSocket cancelada")
+            break
         except Exception as e:
             logger.error(f"Error en la conexión WebSocket: {e}")
-            websocket_client.connected = False
-            await asyncio.sleep(5)  # Esperar 5 segundos antes de reintentar
+            logger.info("Reintentando en 30 segundos...")
+            await asyncio.sleep(30)  # Esperar más tiempo antes de reintentar
 
 @app.on_event("shutdown")
 async def shutdown():
-    await websocket_client.close()
-    engine.dispose()
-    logger.info("Application shutdown complete")
+    """Evento que se ejecuta al cerrar la aplicación."""
+    logger.info("Iniciando cierre ordenado de la aplicación...")
+    
+    # Cerrar la conexión WebSocket si está activa
+    try:
+        if hasattr(websocket_client, 'connected') and websocket_client.connected:
+            await websocket_client.close()
+            logger.info("Conexión WebSocket cerrada correctamente")
+    except Exception as e:
+        logger.error(f"Error al cerrar la conexión WebSocket: {e}")
+    
+    # Cerrar la conexión a la base de datos
+    try:
+        engine.dispose()
+        logger.info("Conexión a la base de datos cerrada correctamente")
+    except Exception as e:
+        logger.error(f"Error al cerrar la conexión a la base de datos: {e}")
+    
+    # Cerrar cliente n8n
+    try:
+        await shutdown_n8n_client()
+        logger.info("Cliente n8n cerrado correctamente")
+    except Exception as e:
+        logger.error(f"Error al cerrar el cliente n8n: {e}")
+    
+    logger.info("Aplicación cerrada correctamente")
 
 @app.get("/test-ws")
 async def test_websocket():
